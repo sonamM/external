@@ -1,0 +1,11 @@
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/common/BaseTest.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/pages/AmazonMainPage.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/pages/test/TestAmazonMainPage.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/common/CommonPage.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/pages/test/TestMobile.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/listener/SuiteListener.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/pages/test/TestCommon.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/common/iOSDeviceTest.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/common/ReportConfig.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/amazon/pages/test/TestWeb.java
+/Users/sonamdeo/eTouch-local-git/test-automation-version1/AmazonPOC/src/main/java/com/etouch/report/TestNGReporter.java

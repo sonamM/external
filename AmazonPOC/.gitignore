@@ -1,11 +1,11 @@
-/target
-/target/
-/test-output/
-/test-output/*
-/XSLT_Reports/*
+#/target
+#/target/
+#/test-output/
+#/test-output/*
+#/XSLT_Reports/*
 
-*.class
-*.classpath
+#*.class
+#*.classpath
 
 
 # Package Files #

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results skipped="0" failed="0" total="2" passed="2">
+  <reporter-output>
+  </reporter-output>
+  <suite name="Firefox Suite" duration-ms="29369" started-at="2015-03-09T23:40:01Z" finished-at="2015-03-09T23:40:30Z">
+    <groups>
+    </groups>
+    <test name="Firefox Test" duration-ms="29369" started-at="2015-03-09T23:40:01Z" finished-at="2015-03-09T23:40:30Z">
+      <class name="com.etouch.amazon.pages.test.TestAmazonMainPage">
+        <test-method status="PASS" signature="loadConfig()[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="loadConfig" is-config="true" duration-ms="35" started-at="2015-03-09T16:40:01Z" finished-at="2015-03-09T16:40:01Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- loadConfig -->
+        <test-method status="PASS" signature="prepareBeforeClass()[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="prepareBeforeClass" is-config="true" duration-ms="7795" started-at="2015-03-09T16:40:01Z" finished-at="2015-03-09T16:40:09Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- prepareBeforeClass -->
+        <test-method status="PASS" signature="printTimeStart(java.lang.reflect.Method)[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="printTimeStart" is-config="true" duration-ms="2" started-at="2015-03-09T16:40:09Z" finished-at="2015-03-09T16:40:09Z">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[public void com.etouch.amazon.pages.test.TestAmazonMainPage.testPreSignIn()]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- printTimeStart -->
+        <test-method status="PASS" signature="testPreSignIn()[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="testPreSignIn" duration-ms="20485" started-at="2015-03-09T16:40:09Z" finished-at="2015-03-09T16:40:29Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testPreSignIn -->
+        <test-method status="PASS" signature="printTimeTaken(java.lang.reflect.Method)[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="printTimeTaken" is-config="true" duration-ms="1" started-at="2015-03-09T16:40:29Z" finished-at="2015-03-09T16:40:29Z">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[public void com.etouch.amazon.pages.test.TestAmazonMainPage.testPreSignIn()]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- printTimeTaken -->
+        <test-method status="PASS" signature="printTimeStart(java.lang.reflect.Method)[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="printTimeStart" is-config="true" duration-ms="1" started-at="2015-03-09T16:40:30Z" finished-at="2015-03-09T16:40:30Z">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[public void com.etouch.amazon.pages.test.TestAmazonMainPage.testSignIn(com.etouch.taf.core.datamanager.excel.TestParameters) throws com.etouch.taf.core.exception.PageException]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- printTimeStart -->
+        <test-method status="PASS" signature="testSignIn(com.etouch.taf.core.datamanager.excel.TestParameters)[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="testSignIn" duration-ms="47" started-at="2015-03-09T16:40:30Z" data-provider="tafDataProvider" finished-at="2015-03-09T16:40:30Z">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[com.etouch.taf.core.datamanager.excel.TestParameters@7e199049]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- testSignIn -->
+        <test-method status="PASS" signature="printTimeTaken(java.lang.reflect.Method)[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="printTimeTaken" is-config="true" duration-ms="0" started-at="2015-03-09T16:40:30Z" finished-at="2015-03-09T16:40:30Z">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[public void com.etouch.amazon.pages.test.TestAmazonMainPage.testSignIn(com.etouch.taf.core.datamanager.excel.TestParameters) throws com.etouch.taf.core.exception.PageException]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- printTimeTaken -->
+        <test-method status="PASS" signature="tearDown()[pri:0, instance:com.etouch.amazon.pages.test.TestAmazonMainPage@52c51614]" name="tearDown" is-config="true" duration-ms="220" started-at="2015-03-09T16:40:30Z" finished-at="2015-03-09T16:40:30Z">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tearDown -->
+      </class> <!-- com.etouch.amazon.pages.test.TestAmazonMainPage -->
+    </test> <!-- Firefox Test -->
+  </suite> <!-- Firefox Suite -->
+</testng-results>

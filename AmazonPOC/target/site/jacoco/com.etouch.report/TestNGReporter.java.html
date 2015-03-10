@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TestNGReporter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">functionalTests</a> &gt; <a href="index.source.html" class="el_package">com.etouch.report</a> &gt; <span class="el_source">TestNGReporter.java</span></div><h1>TestNGReporter.java</h1><pre class="source lang-java linenums"><span class="nc" id="L1">package com.etouch.report;</span>
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
+import org.testng.IInvokedMethod;
+import org.testng.IReporter;
+import org.testng.ISuite;
+import org.testng.ISuiteResult;
+import org.testng.ITestClass;
+import org.testng.ITestContext;
+import org.testng.ITestNGMethod;
+import org.testng.Reporter;
+import org.testng.collections.Maps;
+import org.testng.internal.Utils;
+import org.testng.reporters.HtmlHelper;
+import org.testng.xml.XmlSuite;
+
+import com.etouch.taf.util.CommonUtil;
+
+<span class="nc" id="L29">public class TestNGReporter implements IReporter {</span>
+	
+	public static final String METHODS_CHRONOLOGICAL = &quot;methods.html&quot;;
+	  public static final String METHODS_ALPHABETICAL = &quot;methods-alphabetical.html&quot;;
+	  public static final String GROUPS = &quot;groups.html&quot;;
+	  public static final String CLASSES = &quot;classes.html&quot;;
+	  public static final String REPORTER_OUTPUT = &quot;reporter-output.html&quot;;
+	  public static final String METHODS_NOT_RUN = &quot;methods-not-run.html&quot;;
+	  public static final String TESTNG_XML = &quot;testng.xml.html&quot;;
+
+<span class="nc" id="L39">	  private Map&lt;String, ITestClass&gt; m_classes = Maps.newHashMap();</span>
+	  private String m_outputDirectory;
+
+	  @Override
+<span class="nc" id="L43">	  public void generateReport(List&lt;XmlSuite&gt; xmlSuites, List&lt;ISuite&gt; suites, String outputDirectory) {</span>
+	    m_outputDirectory = generateOutputDirectoryName(outputDirectory + File.separator + &quot;old&quot;);
+
+	    try {
+	      HtmlHelper.generateStylesheet(outputDirectory);
+	    } catch (IOException e) {
+	      //  TODO Propagate the exception properly.
+	      e.printStackTrace();
+	    }
+
+	    for (int i = 0; i &lt; suites.size(); i++) {
+
+	      //
+	      // Generate the various reports
+	      //
+	      ISuite suite = suites.get(i);
+	      XmlSuite xmlSuite = suite.getXmlSuite();
+	      if (xmlSuite.getTests().size() == 0) {
+	        continue;
+	      }
+	      generateTableOfContents(xmlSuite, suite);
+	      generateSuites(xmlSuite, suite);
+	      generateIndex(xmlSuite, suite);
+	      generateMain(xmlSuite, suite);
+	      generateMethodsAndGroups(xmlSuite, suite);
+	      generateMethodsChronologically(xmlSuite, suite, METHODS_CHRONOLOGICAL, false);
+	      generateMethodsChronologically(xmlSuite, suite, METHODS_ALPHABETICAL, true);
+	      generateClasses(xmlSuite, suite);
+	      generateReporterOutput(xmlSuite, suite);
+	      generateExcludedMethodsReport(xmlSuite, suite);
+	      generateXmlFile(xmlSuite, suite);
+	    }
+
+	    generateIndex(suites);
+	  }
+
+	  /**
+	   * Overridable by subclasses to create different directory names (e.g. with timestamps).
+	   * @param outputDirectory the output directory specified by the user
+	   */
+	  protected String generateOutputDirectoryName(String outputDirectory) {
+<span class="nc" id="L84">	    return outputDirectory;</span>
+	  }
+
+	  private void generateXmlFile(XmlSuite xmlSuite, ISuite suite) {
+<span class="nc" id="L88">	    String content = xmlSuite.toXml().replaceAll(&quot;&lt;&quot;, &quot;&amp;lt;&quot;).replaceAll(&quot;&gt;&quot;, &quot;&amp;gt;&quot;)</span>
+<span class="nc" id="L89">	          .replaceAll(&quot; &quot;, &quot;&amp;nbsp;&quot;).replaceAll(&quot;\n&quot;, &quot;&lt;br/&gt;&quot;);</span>
+
+<span class="nc" id="L91">	    StringBuffer sb = new StringBuffer(&quot;&lt;html&gt;&quot;);</span>
+
+<span class="nc" id="L93">	    sb.append(&quot;&lt;head&gt;&lt;title&gt;&quot;).append(&quot;testng.xml for &quot;)</span>
+<span class="nc" id="L94">	      .append(xmlSuite.getName()).append(&quot;&lt;/title&gt;&lt;/head&gt;&lt;body&gt;&lt;tt&gt;&quot;)</span>
+<span class="nc" id="L95">	      .append(content)</span>
+<span class="nc" id="L96">	      .append(&quot;&lt;/tt&gt;&lt;/body&gt;&lt;/html&gt;&quot;);</span>
+
+<span class="nc" id="L98">	    Utils.writeFile(getOutputDirectory(xmlSuite), TESTNG_XML, sb.toString());</span>
+<span class="nc" id="L99">	  }</span>
+
+	  /**
+	   * Generate the main index.html file that lists all the suites
+	   * and their result
+	   */
+	  private void generateIndex(List&lt;ISuite&gt; suites) {
+<span class="nc" id="L106">	    StringBuffer sb = new StringBuffer();</span>
+<span class="nc" id="L107">	    String title = &quot;Test results&quot;;</span>
+<span class="nc" id="L108">	    sb.append(&quot;&lt;html&gt;\n&lt;head&gt;&lt;title&gt;&quot; + title + &quot;&lt;/title&gt;&quot;)</span>
+<span class="nc" id="L109">	      .append(HtmlHelper.getCssString(&quot;.&quot;))</span>
+<span class="nc" id="L110">	      .append(&quot;&lt;/head&gt;&lt;body&gt;\n&quot;)</span>
+<span class="nc" id="L111">	      .append(&quot;&lt;h2&gt;&lt;p align='center'&gt;&quot;).append(title).append(&quot;&lt;/p&gt;&lt;/h2&gt;\n&quot;)</span>
+<span class="nc" id="L112">	      .append(&quot;&lt;table border='1' width='100%' class='main-page'&gt;&quot;)</span>
+<span class="nc" id="L113">	      .append(&quot;&lt;tr&gt;&lt;th&gt;Suite&lt;/th&gt;&lt;th&gt;Passed&lt;/th&gt;&lt;th&gt;Failed&lt;/th&gt;&lt;th&gt;Skipped&lt;/th&gt;&lt;th&gt;testng.xml&lt;/th&gt;&lt;/tr&gt;\n&quot;);</span>
+
+<span class="nc" id="L115">	    int totalFailedTests = 0;</span>
+<span class="nc" id="L116">	    int totalPassedTests = 0;</span>
+<span class="nc" id="L117">	    int totalSkippedTests = 0;</span>
+
+<span class="nc" id="L119">	    StringBuffer suiteBuf= new StringBuffer();</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">	    for (ISuite suite : suites) {</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">	      if (suite.getResults().size() == 0) {</span>
+<span class="nc" id="L122">	        continue;</span>
+	      }
+
+<span class="nc" id="L125">	      String name = suite.getName();</span>
+
+<span class="nc" id="L127">	      int failedTests= 0;</span>
+<span class="nc" id="L128">	      int passedTests= 0;</span>
+<span class="nc" id="L129">	      int skippedTests= 0;</span>
+
+<span class="nc" id="L131">	      Map&lt;String, ISuiteResult&gt; results = suite.getResults();</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">	      for (ISuiteResult result : results.values()) {</span>
+<span class="nc" id="L133">	        ITestContext context = result.getTestContext();</span>
+<span class="nc" id="L134">	        failedTests += context.getFailedTests().size();</span>
+<span class="nc" id="L135">	        totalFailedTests += context.getFailedTests().size();</span>
+<span class="nc" id="L136">	        passedTests += context.getPassedTests().size();</span>
+<span class="nc" id="L137">	        totalPassedTests += context.getPassedTests().size();</span>
+<span class="nc" id="L138">	        skippedTests += context.getSkippedTests().size();</span>
+<span class="nc" id="L139">	        totalSkippedTests += context.getSkippedTests().size();</span>
+	      }
+
+<span class="nc bnc" id="L142" title="All 2 branches missed.">	      String cls = failedTests &gt; 0 ? &quot;invocation-failed&quot;</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">	          : (passedTests &gt; 0  ? &quot;invocation-passed&quot; : &quot;invocation-failed&quot;);</span>
+<span class="nc" id="L144">	      suiteBuf.append(&quot;&lt;tr align='center' class='&quot;).append(cls).append(&quot;'&gt;&quot;)</span>
+<span class="nc" id="L145">	        .append(&quot;&lt;td&gt;&lt;a href='&quot;).append(name).append(&quot;/index.html'&gt;&quot;)</span>
+<span class="nc" id="L146">	        .append(name).append(&quot;&lt;/a&gt;&lt;/td&gt;\n&quot;);</span>
+<span class="nc" id="L147">	      suiteBuf.append(&quot;&lt;td&gt;&quot; + passedTests + &quot;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L148">	        .append(&quot;&lt;td&gt;&quot; + failedTests + &quot;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L149">	        .append(&quot;&lt;td&gt;&quot; + skippedTests + &quot;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L150">	        .append(&quot;&lt;td&gt;&lt;a href='&quot;).append(name).append(&quot;/&quot;).append(TESTNG_XML).append(&quot;'&gt;Link&quot;).append(&quot;&lt;/a&gt;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L151">	        .append(&quot;&lt;/tr&gt;&quot;);</span>
+
+	    }
+
+<span class="nc bnc" id="L155" title="All 2 branches missed.">	    String cls= totalFailedTests &gt; 0 ? &quot;invocation-failed&quot;</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">	        : (totalPassedTests &gt; 0 ? &quot;invocation-passed&quot; : &quot;invocation-failed&quot;);</span>
+<span class="nc" id="L157">	    sb.append(&quot;&lt;tr align='center' class='&quot;).append(cls).append(&quot;'&gt;&quot;)</span>
+<span class="nc" id="L158">	      .append(&quot;&lt;td&gt;&lt;em&gt;Total&lt;/em&gt;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L159">	      .append(&quot;&lt;td&gt;&lt;em&gt;&quot;).append(totalPassedTests).append(&quot;&lt;/em&gt;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L160">	      .append(&quot;&lt;td&gt;&lt;em&gt;&quot;).append(totalFailedTests).append(&quot;&lt;/em&gt;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L161">	      .append(&quot;&lt;td&gt;&lt;em&gt;&quot;).append(totalSkippedTests).append(&quot;&lt;/em&gt;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L162">	      .append(&quot;&lt;td&gt;&amp;nbsp;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L163">	      .append(&quot;&lt;/tr&gt;\n&quot;);</span>
+<span class="nc" id="L164">	    sb.append(suiteBuf);</span>
+<span class="nc" id="L165">	    sb.append(&quot;&lt;/table&gt;&quot;).append(&quot;&lt;/body&gt;&lt;/html&gt;\n&quot;);</span>
+
+<span class="nc" id="L167">	    Utils.writeFile(m_outputDirectory, &quot;index.html&quot;, sb.toString());</span>
+<span class="nc" id="L168">	  }</span>
+
+	  private void generateExcludedMethodsReport(XmlSuite xmlSuite, ISuite suite) {
+<span class="nc" id="L171">	      Collection&lt;ITestNGMethod&gt; excluded = suite.getExcludedMethods();</span>
+<span class="nc" id="L172">	      StringBuffer sb2 = new StringBuffer(&quot;&lt;h2&gt;Methods that were not run&lt;/h2&gt;&lt;table&gt;\n&quot;);</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">	      for (ITestNGMethod method : excluded) {</span>
+<span class="nc" id="L174">	        Method m = method.getMethod();</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">	        if (m != null) {</span>
+<span class="nc" id="L176">	          sb2.append(&quot;&lt;tr&gt;&lt;td&gt;&quot;)</span>
+<span class="nc" id="L177">	          .append(m.getDeclaringClass().getName() + &quot;.&quot; + m.getName());</span>
+<span class="nc" id="L178">	          String description = method.getDescription();</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">	          if(!description.isEmpty()) {</span>
+<span class="nc" id="L180">	            sb2.append(&quot;&lt;br/&gt;&quot;).append(SP2).append(&quot;&lt;i&gt;&quot;).append(description).append(&quot;&lt;/i&gt;&quot;);</span>
+	          }
+<span class="nc" id="L182">	          sb2.append(&quot;&lt;/td&gt;&lt;/tr&gt;\n&quot;);</span>
+	        }
+	      }
+<span class="nc" id="L185">	      sb2.append(&quot;&lt;/table&gt;&quot;);</span>
+
+<span class="nc" id="L187">	      Utils.writeFile(getOutputDirectory(xmlSuite), METHODS_NOT_RUN, sb2.toString());</span>
+<span class="nc" id="L188">	  }</span>
+
+	  private void generateReporterOutput(XmlSuite xmlSuite, ISuite suite) {
+<span class="nc" id="L191">	    StringBuffer sb = new StringBuffer();</span>
+
+	    //
+	    // Reporter output
+	    //
+<span class="nc" id="L196">	    sb.append(&quot;&lt;h2&gt;Reporter output&lt;/h2&gt;&quot;)</span>
+<span class="nc" id="L197">	      .append(&quot;&lt;table&gt;&quot;);</span>
+<span class="nc" id="L198">	    List&lt;String&gt; output = Reporter.getOutput();</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">	    for (String line : output) {</span>
+<span class="nc" id="L200">	      sb.append(&quot;&lt;tr&gt;&lt;td&gt;&quot;).append(line).append(&quot;&lt;/td&gt;&lt;/tr&gt;\n&quot;);</span>
+	    }
+
+<span class="nc" id="L203">	    sb.append(&quot;&lt;/table&gt;&quot;);</span>
+
+<span class="nc" id="L205">	    Utils.writeFile(getOutputDirectory(xmlSuite), REPORTER_OUTPUT, sb.toString());</span>
+<span class="nc" id="L206">	  }</span>
+
+	  private void generateClasses(XmlSuite xmlSuite, ISuite suite) {
+<span class="nc" id="L209">	    StringBuffer sb = new StringBuffer();</span>
+<span class="nc" id="L210">	    sb.append(&quot;&lt;table border='1'&gt;\n&quot;)</span>
+<span class="nc" id="L211">	    .append(&quot;&lt;tr&gt;\n&quot;)</span>
+<span class="nc" id="L212">	    .append(&quot;&lt;th&gt;Class name&lt;/th&gt;\n&quot;)</span>
+<span class="nc" id="L213">	    .append(&quot;&lt;th&gt;Method name&lt;/th&gt;\n&quot;)</span>
+<span class="nc" id="L214">	    .append(&quot;&lt;th&gt;Groups&lt;/th&gt;\n&quot;)</span>
+<span class="nc" id="L215">	    .append(&quot;&lt;/tr&gt;&quot;)</span>
+	    ;
+<span class="nc bnc" id="L217" title="All 2 branches missed.">	    for (ITestClass tc : m_classes.values()) {</span>
+<span class="nc" id="L218">	      sb.append(generateClass(tc));</span>
+	    }
+
+<span class="nc" id="L221">	    sb.append(&quot;&lt;/table&gt;\n&quot;);</span>
+
+<span class="nc" id="L223">	    Utils.writeFile(getOutputDirectory(xmlSuite), CLASSES, sb.toString());</span>
+<span class="nc" id="L224">	  }</span>
+
+	  private final static String SP = &quot;&amp;nbsp;&quot;;
+	  private final static String SP2 = SP + SP + SP + SP;
+	  private final static String SP3 = SP2 + SP2;
+	  private final static String SP4 = SP3 + SP3;
+
+	  private String generateClass(ITestClass cls) {
+<span class="nc" id="L232">	    StringBuffer sb = new StringBuffer();</span>
+
+<span class="nc" id="L234">	    sb.append(&quot;&lt;tr&gt;\n&quot;)</span>
+<span class="nc" id="L235">	      .append(&quot;&lt;td&gt;&quot;).append(cls.getRealClass().getName()).append(&quot;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L236">	      .append(&quot;&lt;td&gt;&amp;nbsp;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L237">	      .append(&quot;&lt;td&gt;&amp;nbsp;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L238">	      .append(&quot;&lt;/tr&gt;\n&quot;)</span>
+	      ;
+
+<span class="nc" id="L241">	    String[] tags = new String[] {</span>
+<span class="nc" id="L242">	        &quot;@Test&quot;,</span>
+<span class="nc" id="L243">	        &quot;@BeforeClass&quot;,</span>
+<span class="nc" id="L244">	        &quot;@BeforeMethod&quot;,</span>
+<span class="nc" id="L245">	        &quot;@AfterMethod&quot;,</span>
+<span class="nc" id="L246">	        &quot;@AfterClass&quot;</span>
+	    };
+<span class="nc" id="L248">	    ITestNGMethod[][] methods = new ITestNGMethod[][] {</span>
+<span class="nc" id="L249">	      cls.getTestMethods(),</span>
+<span class="nc" id="L250">	      cls.getBeforeClassMethods(),</span>
+<span class="nc" id="L251">	      cls.getBeforeTestMethods(),</span>
+<span class="nc" id="L252">	      cls.getAfterTestMethods(),</span>
+<span class="nc" id="L253">	      cls.getAfterClassMethods()</span>
+	    };
+
+<span class="nc bnc" id="L256" title="All 2 branches missed.">	    for (int i = 0; i &lt; tags.length; i++) {</span>
+<span class="nc" id="L257">	      sb.append(&quot;&lt;tr&gt;\n&quot;)</span>
+<span class="nc" id="L258">	      .append(&quot;&lt;td align='center' colspan='3'&gt;&quot;).append(tags[i]).append(&quot;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L259">	      .append(&quot;&lt;/tr&gt;\n&quot;)</span>
+<span class="nc" id="L260">	      .append(dumpMethods(methods[i]))</span>
+	      ;
+	    }
+//	    sb.append(&quot;&lt;hr width='100%'/&gt;&quot;)
+//	    .append(&quot;&lt;h3&gt;&quot;).append(cls.getRealClass().getName()).append(&quot;&lt;/h3&gt;\n&quot;);
+	//
+//	    sb.append(&quot;&lt;div&gt;&quot;).append(SP3).append(&quot;Test methods\n&quot;)
+//	      .append(dumpMethods(cls.getTestMethods())).append(&quot;&lt;/div&gt;\n&quot;)
+//	      .append(&quot;&lt;div&gt;&quot;).append(SP3).append(&quot;@BeforeClass\n&quot;)
+//	      .append(dumpMethods(cls.getBeforeClassMethods())).append(&quot;&lt;/div&gt;\n&quot;)
+//	      .append(&quot;&lt;div&gt;&quot;).append(SP3).append(&quot;@BeforeMethod\n&quot;)
+//	      .append(dumpMethods(cls.getBeforeTestMethods())).append(&quot;&lt;/div&gt;\n&quot;)
+//	      .append(&quot;&lt;div&gt;&quot;).append(SP3).append(&quot;@AfterMethod\n&quot;)
+//	      .append(dumpMethods(cls.getAfterTestMethods())).append(&quot;&lt;/div&gt;\n&quot;)
+//	      .append(&quot;&lt;div&gt;&quot;).append(SP3).append(&quot;@AfterClass\n&quot;)
+//	      .append(dumpMethods(cls.getAfterClassMethods())).append(&quot;&lt;/div&gt;\n&quot;)
+//	     ;
+
+<span class="nc" id="L278">	    String result = sb.toString();</span>
+<span class="nc" id="L279">	    return result;</span>
+	  }
+
+	  private String dumpMethods(ITestNGMethod[] testMethods) {
+<span class="nc" id="L283">	    StringBuffer sb = new StringBuffer();</span>
+<span class="nc bnc" id="L284" title="All 4 branches missed.">	    if(null == testMethods || testMethods.length == 0) {</span>
+<span class="nc" id="L285">	      return &quot;&quot;;</span>
+	    }
+
+<span class="nc bnc" id="L288" title="All 2 branches missed.">	    for (ITestNGMethod m : testMethods) {</span>
+<span class="nc" id="L289">	      sb.append(&quot;&lt;tr&gt;\n&quot;);</span>
+<span class="nc" id="L290">	      sb.append(&quot;&lt;td&gt;&amp;nbsp;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L291">	        .append(&quot;&lt;td&gt;&quot;).append(m.getMethodName()).append(&quot;&lt;/td&gt;\n&quot;)</span>
+	        ;
+<span class="nc" id="L293">	      String[] groups = m.getGroups();</span>
+<span class="nc bnc" id="L294" title="All 4 branches missed.">	      if (groups != null &amp;&amp; groups.length &gt; 0) {</span>
+<span class="nc" id="L295">	        sb.append(&quot;&lt;td&gt;&quot;);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">	        for (String g : groups) {</span>
+<span class="nc" id="L297">	          sb.append(g).append(&quot; &quot;);</span>
+	        }
+<span class="nc" id="L299">	        sb.append(&quot;&lt;/td&gt;\n&quot;);</span>
+<span class="nc" id="L300">	      }</span>
+	      else {
+<span class="nc" id="L302">	        sb.append(&quot;&lt;td&gt;&amp;nbsp;&lt;/td&gt;&quot;);</span>
+	      }
+<span class="nc" id="L304">	      sb.append(&quot;&lt;/tr&gt;\n&quot;);</span>
+	    }
+
+//	    StringBuffer sb = new StringBuffer(&quot;&lt;br/&gt;&quot;);  //&quot;&lt;table bgcolor=\&quot;#c0c0c0\&quot;/&gt;&quot;);
+//	    for (ITestNGMethod tm : testMethods) {
+//	      sb
+//	      .append(SP4).append(tm.getMethodName()).append(&quot;()\n&quot;)
+//	      .append(dumpGroups(tm.getGroups()))
+//	      .append(&quot;&lt;br/&gt;&quot;);
+//	      ;
+//	    }
+
+
+<span class="nc" id="L317">	    String result = sb.toString();</span>
+<span class="nc" id="L318">	    return result;</span>
+	  }
+
+	  private String dumpGroups(String[] groups) {
+<span class="nc" id="L322">	    StringBuffer sb = new StringBuffer();</span>
+
+<span class="nc bnc" id="L324" title="All 4 branches missed.">	    if (null != groups &amp;&amp; groups.length &gt; 0) {</span>
+<span class="nc" id="L325">	      sb.append(SP4).append(&quot;&lt;em&gt;[&quot;);</span>
+
+<span class="nc bnc" id="L327" title="All 2 branches missed.">	      for (String g : groups) {</span>
+<span class="nc" id="L328">	        sb.append(g).append(&quot; &quot;);</span>
+	      }
+
+<span class="nc" id="L331">	      sb.append(&quot;]&lt;/em&gt;&lt;br/&gt;\n&quot;);</span>
+	    }
+
+<span class="nc" id="L334">	    String result = sb.toString();</span>
+<span class="nc" id="L335">	    return result;</span>
+	  }
+
+	  /**
+	   * Generate information about the methods that were run
+	   */
+	  public static final String AFTER= &quot;&amp;lt;&amp;lt;&quot;;
+	  public static final String BEFORE = &quot;&amp;gt;&amp;gt;&quot;;
+	  private void generateMethodsChronologically(XmlSuite xmlSuite, ISuite suite,
+	      String outputFileName, boolean alphabetical)
+	  {
+<span class="nc" id="L346">	    StringBuffer sb = new StringBuffer();</span>
+
+<span class="nc" id="L348">	    sb.append(&quot;&lt;h2&gt;Methods run, sorted chronologically&lt;/h2&gt;&quot;);</span>
+<span class="nc" id="L349">	    sb.append(&quot;&lt;h3&gt;&quot; + BEFORE + &quot; means before, &quot; + AFTER + &quot; means after&lt;/h3&gt;&lt;p/&gt;&quot;);</span>
+
+<span class="nc" id="L351">	    long startDate = -1;</span>
+<span class="nc" id="L352">	    sb.append(&quot;&lt;br/&gt;&lt;em&gt;&quot;).append(suite.getName()).append(&quot;&lt;/em&gt;&lt;p/&gt;&quot;);</span>
+<span class="nc" id="L353">	    sb.append(&quot;&lt;small&gt;&lt;i&gt;(Hover the method name to see the test class name)&lt;/i&gt;&lt;/small&gt;&lt;p/&gt;\n&quot;);</span>
+<span class="nc" id="L354">	    Utils.writeFile(getOutputDirectory(xmlSuite), outputFileName, sb.toString());</span>
+<span class="nc" id="L355">	    sb = null; //not needed anymore</span>
+
+<span class="nc" id="L357">	    Collection&lt;IInvokedMethod&gt; invokedMethods = suite.getAllInvokedMethods();</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">	    if (alphabetical) {</span>
+	      @SuppressWarnings({&quot;unchecked&quot;})
+<span class="nc" id="L360">	      Comparator&lt;? super ITestNGMethod&gt;  alphabeticalComparator = new Comparator(){</span>
+	        @Override
+<span class="nc" id="L362">	        public int compare(Object o1, Object o2) {</span>
+	          IInvokedMethod m1 = (IInvokedMethod) o1;
+	          IInvokedMethod m2 = (IInvokedMethod) o2;
+	          return m1.getTestMethod().getMethodName().compareTo(m2.getTestMethod().getMethodName());
+	        }
+	      };
+<span class="nc" id="L368">	      Collections.sort((List) invokedMethods, alphabeticalComparator);</span>
+	    }
+
+<span class="nc" id="L371">	    SimpleDateFormat format = new SimpleDateFormat(&quot;yy/MM/dd HH:mm:ss&quot;);</span>
+<span class="nc" id="L372">	    StringBuffer table = new StringBuffer();</span>
+<span class="nc" id="L373">	    boolean addedHeader = false;</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">	    for (IInvokedMethod iim : invokedMethods) {</span>
+<span class="nc" id="L375">	      ITestNGMethod tm = iim.getTestMethod();</span>
+<span class="nc" id="L376">	      table.setLength(0);</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">	      if (!addedHeader) {</span>
+<span class="nc" id="L378">	        table.append(&quot;&lt;table border=\&quot;1\&quot;&gt;\n&quot;)</span>
+<span class="nc" id="L379">	          .append(&quot;&lt;tr&gt;&quot;)</span>
+<span class="nc" id="L380">	          .append(&quot;&lt;th&gt;Time&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L381">	          .append(&quot;&lt;th&gt;Delta (ms)&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L382">	          .append(&quot;&lt;th&gt;Suite&lt;br&gt;configuration&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L383">	          .append(&quot;&lt;th&gt;Test&lt;br&gt;configuration&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L384">	          .append(&quot;&lt;th&gt;Class&lt;br&gt;configuration&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L385">	          .append(&quot;&lt;th&gt;Groups&lt;br&gt;configuration&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L386">	          .append(&quot;&lt;th&gt;Method&lt;br&gt;configuration&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L387">	          .append(&quot;&lt;th&gt;Test&lt;br&gt;method&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L388">	          .append(&quot;&lt;th&gt;Thread&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L389">	          .append(&quot;&lt;th&gt;Instances&lt;/th&gt;&quot;)</span>
+<span class="nc" id="L390">	          .append(&quot;&lt;/tr&gt;\n&quot;);</span>
+<span class="nc" id="L391">	        addedHeader = true;</span>
+	      }
+<span class="nc" id="L393">	      String methodName = tm.toString();</span>
+<span class="nc" id="L394">	      boolean bc = tm.isBeforeClassConfiguration();</span>
+<span class="nc" id="L395">	      boolean ac = tm.isAfterClassConfiguration();</span>
+<span class="nc" id="L396">	      boolean bt = tm.isBeforeTestConfiguration();</span>
+<span class="nc" id="L397">	      boolean at = tm.isAfterTestConfiguration();</span>
+<span class="nc" id="L398">	      boolean bs = tm.isBeforeSuiteConfiguration();</span>
+<span class="nc" id="L399">	      boolean as = tm.isAfterSuiteConfiguration();</span>
+<span class="nc" id="L400">	      boolean bg = tm.isBeforeGroupsConfiguration();</span>
+<span class="nc" id="L401">	      boolean ag = tm.isAfterGroupsConfiguration();</span>
+<span class="nc" id="L402">	      boolean setUp = tm.isBeforeMethodConfiguration();</span>
+<span class="nc" id="L403">	      boolean tearDown = tm.isAfterMethodConfiguration();</span>
+<span class="nc bnc" id="L404" title="All 4 branches missed.">	      boolean isClassConfiguration = bc || ac;</span>
+<span class="nc bnc" id="L405" title="All 4 branches missed.">	      boolean isGroupsConfiguration = bg || ag;</span>
+<span class="nc bnc" id="L406" title="All 4 branches missed.">	      boolean isTestConfiguration = bt || at;</span>
+<span class="nc bnc" id="L407" title="All 4 branches missed.">	      boolean isSuiteConfiguration = bs || as;</span>
+<span class="nc bnc" id="L408" title="All 4 branches missed.">	      boolean isSetupOrTearDown = setUp || tearDown;</span>
+<span class="nc bnc" id="L409" title="All 4 branches missed.">	      String configurationClassMethod = isClassConfiguration ? (bc ? BEFORE : AFTER) + methodName : SP;</span>
+<span class="nc bnc" id="L410" title="All 4 branches missed.">	      String configurationTestMethod = isTestConfiguration ? (bt ? BEFORE : AFTER) + methodName : SP;</span>
+<span class="nc bnc" id="L411" title="All 4 branches missed.">	      String configurationGroupsMethod = isGroupsConfiguration ? (bg ? BEFORE : AFTER) + methodName : SP;</span>
+<span class="nc bnc" id="L412" title="All 4 branches missed.">	      String configurationSuiteMethod = isSuiteConfiguration ? (bs ? BEFORE : AFTER) + methodName : SP;</span>
+<span class="nc bnc" id="L413" title="All 4 branches missed.">	      String setUpOrTearDownMethod = isSetupOrTearDown ? (setUp ? BEFORE : AFTER) + methodName : SP;</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">	      String testMethod = tm.isTest() ? methodName : SP;</span>
+
+<span class="nc" id="L416">	      StringBuffer instances = new StringBuffer();</span>
+<span class="nc bnc" id="L417" title="All 2 branches missed.">	      for (long o : tm.getInstanceHashCodes()) {</span>
+<span class="nc" id="L418">	        instances.append(o).append(&quot; &quot;);</span>
+	      }
+
+<span class="nc bnc" id="L421" title="All 2 branches missed.">	      if (startDate == -1) {</span>
+<span class="nc" id="L422">	        startDate = iim.getDate();</span>
+	      }
+<span class="nc" id="L424">	      String date = format.format(iim.getDate());</span>
+<span class="nc" id="L425">	      table.append(&quot;&lt;tr bgcolor=\&quot;&quot; + createColor(tm) + &quot;\&quot;&gt;&quot;)</span>
+<span class="nc" id="L426">	        .append(&quot;  &lt;td&gt;&quot;).append(date).append(&quot;&lt;/td&gt; &quot;)</span>
+<span class="nc" id="L427">	        .append(&quot;  &lt;td&gt;&quot;).append(iim.getDate() - startDate).append(&quot;&lt;/td&gt; &quot;)</span>
+<span class="nc" id="L428">	        .append(td(configurationSuiteMethod))</span>
+<span class="nc" id="L429">	        .append(td(configurationTestMethod))</span>
+<span class="nc" id="L430">	        .append(td(configurationClassMethod))</span>
+<span class="nc" id="L431">	        .append(td(configurationGroupsMethod))</span>
+<span class="nc" id="L432">	        .append(td(setUpOrTearDownMethod))</span>
+<span class="nc" id="L433">	        .append(td(testMethod))</span>
+<span class="nc" id="L434">	        .append(&quot;  &lt;td&gt;&quot;).append(tm.getId()).append(&quot;&lt;/td&gt; &quot;)</span>
+<span class="nc" id="L435">	        .append(&quot;  &lt;td&gt;&quot;).append(instances).append(&quot;&lt;/td&gt; &quot;)</span>
+<span class="nc" id="L436">	        .append(&quot;&lt;/tr&gt;\n&quot;)</span>
+	        ;
+<span class="nc" id="L438">	      Utils.appendToFile(getOutputDirectory(xmlSuite), outputFileName, table.toString());</span>
+	    }
+<span class="nc" id="L440">	    Utils.appendToFile(getOutputDirectory(xmlSuite), outputFileName, &quot;&lt;/table&gt;\n&quot;);</span>
+<span class="nc" id="L441">	  }</span>
+
+	  /**
+	   * Generate a HTML color based on the class of the method
+	   */
+	  private String createColor(ITestNGMethod tm) {
+	    // real class can be null if this client is remote (not serializable)
+<span class="nc bnc" id="L448" title="All 2 branches missed.">	    long color = tm.getRealClass() != null ? tm.getRealClass().hashCode() &amp; 0xffffff: 0xffffff;</span>
+<span class="nc" id="L449">	    long[] rgb = {</span>
+<span class="nc" id="L450">	        ((color &amp; 0xff0000) &gt;&gt; 16) &amp; 0xff,</span>
+<span class="nc" id="L451">	        ((color &amp; 0x00ff00) &gt;&gt; 8) &amp; 0xff,</span>
+<span class="nc" id="L452">	        color &amp; 0xff</span>
+	    };
+	    // Not too dark
+<span class="nc bnc" id="L455" title="All 2 branches missed.">	    for (int i = 0; i &lt; rgb.length; i++) {</span>
+<span class="nc bnc" id="L456" title="All 2 branches missed.">	      if (rgb[i] &lt; 0x60) {</span>
+<span class="nc" id="L457">	        rgb[i] += 0x60;</span>
+	      }
+	    }
+<span class="nc" id="L460">	    long adjustedColor = (rgb[0] &lt;&lt; 16) | (rgb[1] &lt;&lt; 8) | rgb[2];</span>
+<span class="nc" id="L461">	    String result = Long.toHexString(adjustedColor);</span>
+
+<span class="nc" id="L463">	    return result;</span>
+	  }
+
+	  private String td(String s) {
+<span class="nc" id="L467">	    StringBuffer result = new StringBuffer();</span>
+<span class="nc" id="L468">	    String prefix = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L470" title="All 2 branches missed.">	    if (s.startsWith(BEFORE)) {</span>
+<span class="nc" id="L471">	      prefix = BEFORE;</span>
+<span class="nc" id="L472">	    }</span>
+<span class="nc bnc" id="L473" title="All 2 branches missed.">	    else if (s.startsWith(AFTER)) {</span>
+<span class="nc" id="L474">	      prefix = AFTER;</span>
+	    }
+
+<span class="nc bnc" id="L477" title="All 2 branches missed.">	    if (! s.equals(SP)) {</span>
+<span class="nc" id="L478">	      result.append(&quot;&lt;td title=\&quot;&quot;).append(s).append(&quot;\&quot;&gt;&quot;);</span>
+<span class="nc" id="L479">	      int open = s.lastIndexOf(&quot;(&quot;);</span>
+<span class="nc" id="L480">	      int start = s.substring(0, open).lastIndexOf(&quot;.&quot;);</span>
+//	      int end = s.lastIndexOf(&quot;)&quot;);
+<span class="nc bnc" id="L482" title="All 2 branches missed.">	      if (start &gt;= 0) {</span>
+<span class="nc" id="L483">	        result.append(prefix + s.substring(start + 1, open));</span>
+<span class="nc" id="L484">	      }</span>
+	      else {
+<span class="nc" id="L486">	        result.append(prefix + s);</span>
+	      }
+<span class="nc" id="L488">	      result.append(&quot;&lt;/td&gt; \n&quot;);</span>
+<span class="nc" id="L489">	    }</span>
+	    else {
+<span class="nc" id="L491">	      result.append(&quot;&lt;td&gt;&quot;).append(SP).append(&quot;&lt;/td&gt;&quot;);</span>
+	    }
+
+<span class="nc" id="L494">	    return result.toString();</span>
+	  }
+
+	  private void ppp(String s) {
+<span class="nc" id="L498">	    CommonUtil.sop(&quot;[SuiteHTMLReporter] &quot; + s);</span>
+<span class="nc" id="L499">	  }</span>
+
+	  /**
+	   * Generate information about methods and groups
+	   */
+	  private void generateMethodsAndGroups(XmlSuite xmlSuite, ISuite suite) {
+<span class="nc" id="L505">	    StringBuffer sb = new StringBuffer();</span>
+
+<span class="nc" id="L507">	    Map&lt;String, Collection&lt;ITestNGMethod&gt;&gt; groups = suite.getMethodsByGroups();</span>
+
+<span class="nc" id="L509">	    sb.append(&quot;&lt;h2&gt;Groups used for this test run&lt;/h2&gt;&quot;);</span>
+<span class="nc bnc" id="L510" title="All 2 branches missed.">	    if (groups.size() &gt; 0) {</span>
+<span class="nc" id="L511">	      sb.append(&quot;&lt;table border=\&quot;1\&quot;&gt;\n&quot;)</span>
+<span class="nc" id="L512">	        .append(&quot;&lt;tr&gt; &lt;td align=\&quot;center\&quot;&gt;&lt;b&gt;Group name&lt;/b&gt;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L513">	        .append(&quot;&lt;td align=\&quot;center\&quot;&gt;&lt;b&gt;Methods&lt;/b&gt;&lt;/td&gt;&lt;/tr&gt;&quot;);</span>
+
+<span class="nc" id="L515">	      String[] groupNames = groups.keySet().toArray(new String[groups.size()]);</span>
+<span class="nc" id="L516">	      Arrays.sort(groupNames);</span>
+<span class="nc bnc" id="L517" title="All 2 branches missed.">	      for (String group : groupNames) {</span>
+<span class="nc" id="L518">	        Collection&lt;ITestNGMethod&gt; methods = groups.get(group);</span>
+<span class="nc" id="L519">	        sb.append(&quot;&lt;tr&gt;&lt;td&gt;&quot;).append(group).append(&quot;&lt;/td&gt;&quot;);</span>
+<span class="nc" id="L520">	        StringBuffer methodNames = new StringBuffer();</span>
+<span class="nc" id="L521">	        Map&lt;ITestNGMethod, ITestNGMethod&gt; uniqueMethods = Maps.newHashMap();</span>
+<span class="nc bnc" id="L522" title="All 2 branches missed.">	        for (ITestNGMethod tm : methods) {</span>
+<span class="nc" id="L523">	          uniqueMethods.put(tm, tm);</span>
+	        }
+<span class="nc bnc" id="L525" title="All 2 branches missed.">	        for (ITestNGMethod tm : uniqueMethods.values()) {</span>
+<span class="nc" id="L526">	          methodNames.append(tm.toString()).append(&quot;&lt;br/&gt;&quot;);</span>
+	        }
+<span class="nc" id="L528">	        sb.append(&quot;&lt;td&gt;&quot; + methodNames.toString() + &quot;&lt;/td&gt;&lt;/tr&gt;\n&quot;);</span>
+	      }
+
+<span class="nc" id="L531">	      sb.append(&quot;&lt;/table&gt;\n&quot;);</span>
+	    }
+<span class="nc" id="L533">	    Utils.writeFile(getOutputDirectory(xmlSuite), GROUPS, sb.toString());</span>
+<span class="nc" id="L534">	  }</span>
+
+	  private void generateIndex(XmlSuite xmlSuite, ISuite sr) {
+<span class="nc" id="L537">	    StringBuffer index = new StringBuffer()</span>
+<span class="nc" id="L538">	    .append(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Results for &quot; + sr.getName() + &quot;&lt;/title&gt;&lt;/head&gt;\n&quot;)</span>
+<span class="nc" id="L539">	    .append(&quot;&lt;frameset cols=\&quot;26%,74%\&quot;&gt;\n&quot;)</span>
+<span class="nc" id="L540">	    .append(&quot;&lt;frame src=\&quot;toc.html\&quot; name=\&quot;navFrame\&quot;&gt;\n&quot;)</span>
+<span class="nc" id="L541">	    .append(&quot;&lt;frame src=\&quot;main.html\&quot; name=\&quot;mainFrame\&quot;&gt;\n&quot;)</span>
+<span class="nc" id="L542">	    .append(&quot;&lt;/frameset&gt;\n&quot;)</span>
+<span class="nc" id="L543">	    .append(&quot;&lt;/html&gt;\n&quot;)</span>
+	    ;
+
+<span class="nc" id="L546">	    Utils.writeFile(getOutputDirectory(xmlSuite), &quot;index.html&quot;, index.toString());</span>
+<span class="nc" id="L547">	  }</span>
+
+	  private String makeTitle(ISuite suite) {
+<span class="nc" id="L550">	    return &quot;Results for&lt;br/&gt;&lt;em&gt;&quot; + suite.getName() + &quot;&lt;/em&gt;&quot;;</span>
+	  }
+
+	  private void generateMain(XmlSuite xmlSuite, ISuite sr) {
+<span class="nc" id="L554">	    StringBuffer index = new StringBuffer()</span>
+<span class="nc" id="L555">	    .append(&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Results for &quot; + sr.getName() + &quot;&lt;/title&gt;&lt;/head&gt;\n&quot;)</span>
+<span class="nc" id="L556">	    .append(&quot;&lt;body&gt;Select a result on the left-hand pane.&lt;/body&gt;&quot;)</span>
+<span class="nc" id="L557">	    .append(&quot;&lt;/html&gt;\n&quot;)</span>
+	    ;
+
+<span class="nc" id="L560">	    Utils.writeFile(getOutputDirectory(xmlSuite), &quot;main.html&quot;, index.toString());</span>
+<span class="nc" id="L561">	  }</span>
+
+	  /**
+	   *
+	   */
+	  private void generateTableOfContents(XmlSuite xmlSuite, ISuite suite) {
+<span class="nc" id="L567">	    StringBuffer tableOfContents = new StringBuffer();</span>
+
+	    //
+	    // Generate methods and groups hyperlinks
+	    //
+<span class="nc" id="L572">	    Map&lt;String, ISuiteResult&gt; suiteResults = suite.getResults();</span>
+<span class="nc" id="L573">	    int groupCount = suite.getMethodsByGroups().size();</span>
+<span class="nc" id="L574">	    int methodCount = 0;</span>
+<span class="nc bnc" id="L575" title="All 2 branches missed.">	    for (ISuiteResult sr : suiteResults.values()) {</span>
+<span class="nc" id="L576">	      ITestNGMethod[] methods = sr.getTestContext().getAllTestMethods();</span>
+<span class="nc" id="L577">	      methodCount += Utils.calculateInvokedMethodCount(methods);</span>
+
+	      // Collect testClasses
+<span class="nc bnc" id="L580" title="All 2 branches missed.">	      for (ITestNGMethod tm : methods) {</span>
+<span class="nc" id="L581">	        ITestClass tc = tm.getTestClass();</span>
+<span class="nc" id="L582">	        m_classes.put(tc.getRealClass().getName(), tc);</span>
+	      }
+	    }
+
+<span class="nc" id="L586">	    String name = &quot;Results for &quot; + suite.getName();</span>
+<span class="nc" id="L587">	    tableOfContents</span>
+<span class="nc" id="L588">	        .append(&quot;&lt;html&gt;\n&quot;)</span>
+<span class="nc" id="L589">	        .append(&quot;&lt;head&gt;\n&quot;)</span>
+<span class="nc" id="L590">	        .append(&quot;&lt;title&gt;&quot; + name + &quot;&lt;/title&gt;\n&quot;)</span>
+<span class="nc" id="L591">	        .append(HtmlHelper.getCssString())</span>
+<span class="nc" id="L592">	        .append(&quot;&lt;/head&gt;\n&quot;)</span>
+	        ;
+<span class="nc" id="L594">	    tableOfContents</span>
+<span class="nc" id="L595">	        .append(&quot;&lt;body&gt;\n&quot;)</span>
+<span class="nc" id="L596">	        .append(&quot;&lt;h3&gt;&lt;p align=\&quot;center\&quot;&gt;&quot; + makeTitle(suite) + &quot;&lt;/p&gt;&lt;/h3&gt;\n&quot;)</span>
+<span class="nc" id="L597">	        .append(&quot;&lt;table border='1' width='100%'&gt;\n&quot;)</span>
+<span class="nc" id="L598">	        .append(&quot;&lt;tr valign='top'&gt;\n&quot;)</span>
+<span class="nc" id="L599">	          .append(&quot;&lt;td&gt;&quot;)</span>
+<span class="nc" id="L600">	            .append(suiteResults.size()).append(&quot; &quot;).append(pluralize(suiteResults.size(), &quot;test&quot;))</span>
+<span class="nc" id="L601">	          .append(&quot;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L602">	          .append(&quot;&lt;td&gt;&quot;)</span>
+<span class="nc" id="L603">	              .append(&quot;&lt;a target='mainFrame' href='&quot;).append(CLASSES).append(&quot;'&gt;&quot;)</span>
+<span class="nc" id="L604">	              .append(m_classes.size() + &quot; &quot; + pluralize(m_classes.size(), &quot;class&quot;))</span>
+<span class="nc" id="L605">	              .append(&quot;&lt;/a&gt;&quot;)</span>
+<span class="nc" id="L606">	          .append(&quot;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L607">	          .append(&quot;&lt;td&gt;&quot; + methodCount + &quot; &quot; + pluralize(methodCount, &quot;method&quot;) + &quot;:&lt;br/&gt;\n&quot;)</span>
+<span class="nc" id="L608">	            .append(&quot;&amp;nbsp;&amp;nbsp;&lt;a target='mainFrame' href='&quot;).append(METHODS_CHRONOLOGICAL).append(&quot;'&gt;&quot;).append(&quot;chronological&lt;/a&gt;&lt;br/&gt;\n&quot;)</span>
+<span class="nc" id="L609">	            .append(&quot;&amp;nbsp;&amp;nbsp;&lt;a target='mainFrame' href='&quot;).append(METHODS_ALPHABETICAL).append(&quot;\'&gt;&quot;).append(&quot;alphabetical&lt;/a&gt;&lt;br/&gt;\n&quot;)</span>
+<span class="nc" id="L610">	            .append(&quot;&amp;nbsp;&amp;nbsp;&lt;a target='mainFrame' href='&quot;).append(METHODS_NOT_RUN).append(&quot;'&gt;not run (&quot; + suite.getExcludedMethods().size() + &quot;)&lt;/a&gt;&quot;)</span>
+<span class="nc" id="L611">	          .append(&quot;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L612">	        .append(&quot;&lt;/tr&gt;\n&quot;)</span>
+
+<span class="nc" id="L614">	        .append(&quot;&lt;tr&gt;\n&quot;)</span>
+<span class="nc" id="L615">	        .append(&quot;&lt;td&gt;&lt;a target='mainFrame' href='&quot;).append(GROUPS).append(&quot;'&gt;&quot;).append(groupCount + pluralize(groupCount, &quot; group&quot;) + &quot;&lt;/a&gt;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L616">	        .append(&quot;&lt;td&gt;&lt;a target='mainFrame' href='&quot;).append(REPORTER_OUTPUT).append(&quot;'&gt;reporter output&lt;/a&gt;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L617">	        .append(&quot;&lt;td&gt;&lt;a target='mainFrame' href='&quot;).append(TESTNG_XML).append(&quot;'&gt;testng.xml&lt;/a&gt;&lt;/td&gt;\n&quot;)</span>
+<span class="nc" id="L618">	        .append(&quot;&lt;/tr&gt;&quot;)</span>
+<span class="nc" id="L619">	        .append(&quot;&lt;/table&gt;&quot;);</span>
+
+	      //
+	      // Generate results for individual tests
+	      //
+
+	      // Order the results so we can show the failures first, then the skip and
+	      // finally the successes
+<span class="nc" id="L627">	      Map&lt;String, ISuiteResult&gt; redResults = Maps.newHashMap();</span>
+<span class="nc" id="L628">	      Map&lt;String, ISuiteResult&gt; yellowResults = Maps.newHashMap();</span>
+<span class="nc" id="L629">	      Map&lt;String, ISuiteResult&gt; greenResults = Maps.newHashMap();</span>
+
+<span class="nc bnc" id="L631" title="All 2 branches missed.">	      for (Map.Entry&lt;String, ISuiteResult&gt; entry : suiteResults.entrySet()) {</span>
+<span class="nc" id="L632">	        String suiteName = entry.getKey();</span>
+<span class="nc" id="L633">	        ISuiteResult sr = entry.getValue();</span>
+<span class="nc" id="L634">	        ITestContext tc = sr.getTestContext();</span>
+<span class="nc" id="L635">	        int failed = tc.getFailedTests().size();</span>
+<span class="nc" id="L636">	        int skipped = tc.getSkippedTests().size();</span>
+<span class="nc" id="L637">	        int passed = tc.getPassedTests().size();</span>
+
+<span class="nc bnc" id="L639" title="All 2 branches missed.">	        if (failed &gt; 0) {</span>
+<span class="nc" id="L640">	          redResults.put(suiteName, sr);</span>
+<span class="nc" id="L641">	        }</span>
+<span class="nc bnc" id="L642" title="All 2 branches missed.">	        else if (skipped &gt; 0) {</span>
+<span class="nc" id="L643">	          yellowResults.put(suiteName, sr);</span>
+<span class="nc" id="L644">	        }</span>
+<span class="nc bnc" id="L645" title="All 2 branches missed.">	        else if (passed &gt; 0) {</span>
+<span class="nc" id="L646">	          greenResults.put(suiteName, sr);</span>
+<span class="nc" id="L647">	        }</span>
+	        else {
+<span class="nc" id="L649">	          redResults.put(suiteName, sr);</span>
+	        }
+	      }
+
+
+<span class="nc" id="L654">	      ISuiteResult[][] results = new ISuiteResult[][] {</span>
+<span class="nc" id="L655">	        sortResults(redResults.values()), sortResults(yellowResults.values()), sortResults(greenResults.values())</span>
+	      };
+
+<span class="nc" id="L658">	      String[] colors = {&quot;failed&quot;, &quot;skipped&quot;, &quot;passed&quot;};</span>
+<span class="nc bnc" id="L659" title="All 2 branches missed.">	      for (int i = 0; i &lt; colors.length; i++) {</span>
+<span class="nc" id="L660">	        ISuiteResult[] r = results[i];</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">	        for (ISuiteResult sr: r) {</span>
+<span class="nc" id="L662">	          String suiteName = sr.getTestContext().getName();</span>
+<span class="nc" id="L663">	          generateSuiteResult(suiteName, sr, colors[i], tableOfContents, m_outputDirectory);</span>
+	        }
+	      }
+
+<span class="nc" id="L667">	    tableOfContents.append(&quot;&lt;/body&gt;&lt;/html&gt;&quot;);</span>
+<span class="nc" id="L668">	    Utils.writeFile(getOutputDirectory(xmlSuite), &quot;toc.html&quot;, tableOfContents.toString());</span>
+<span class="nc" id="L669">	  }</span>
+
+	  private String pluralize(int count, String singular) {
+<span class="nc bnc" id="L672" title="All 4 branches missed.">	    return count &gt; 1 ? (singular.endsWith(&quot;s&quot;) ? singular + &quot;es&quot; : singular + &quot;s&quot;) : singular;</span>
+	  }
+
+	  private String getOutputDirectory(XmlSuite xmlSuite) {
+<span class="nc" id="L676">	    return m_outputDirectory + File.separatorChar + xmlSuite.getName();</span>
+	  }
+
+	  private ISuiteResult[] sortResults(Collection&lt;ISuiteResult&gt; r) {
+<span class="nc" id="L680">	    ISuiteResult[] result = r.toArray(new ISuiteResult[r.size()]);</span>
+<span class="nc" id="L681">	    Arrays.sort(result);</span>
+<span class="nc" id="L682">	    return result;</span>
+	  }
+
+	  private void generateSuiteResult(String suiteName,
+	                                   ISuiteResult sr,
+	                                   String cssClass,
+	                                   StringBuffer tableOfContents,
+	                                   String outputDirectory)
+	  {
+<span class="nc" id="L691">	    ITestContext tc = sr.getTestContext();</span>
+<span class="nc" id="L692">	    int passed = tc.getPassedTests().size();</span>
+<span class="nc" id="L693">	    int failed = tc.getFailedTests().size();</span>
+<span class="nc" id="L694">	    int skipped = tc.getSkippedTests().size();</span>
+<span class="nc" id="L695">	    String baseFile = tc.getName();</span>
+<span class="nc" id="L696">	    tableOfContents</span>
+<span class="nc" id="L697">	      .append(&quot;\n&lt;table width='100%' class='test-&quot;).append(cssClass).append(&quot;'&gt;\n&quot;)</span>
+<span class="nc" id="L698">	      .append(&quot;&lt;tr&gt;&lt;td&gt;\n&quot;)</span>
+<span class="nc" id="L699">	      .append(&quot;&lt;table style='width: 100%'&gt;&lt;tr&gt;&quot;)</span>
+<span class="nc" id="L700">	      .append(&quot;&lt;td valign='top'&gt;&quot;)</span>
+<span class="nc" id="L701">	      .append(suiteName).append(&quot; (&quot;).append(passed).append(&quot;/&quot;).append(failed).append(&quot;/&quot;).append(skipped).append(&quot;)&quot;)</span>
+<span class="nc" id="L702">	      .append(&quot;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L703">	      .append(&quot;&lt;td valign='top' align='right'&gt;\n&quot;)</span>
+<span class="nc" id="L704">	      .append(&quot;  &lt;a href='&quot; + baseFile + &quot;.html' target='mainFrame'&gt;Results&lt;/a&gt;\n&quot;)</span>
+//	      .append(&quot;  &lt;a href=\&quot;&quot; + baseFile + &quot;.out\&quot; target=\&quot;mainFrame\&quot;\&quot;&gt;Output&lt;/a&gt;\n&quot;)
+//	      .append(&quot;&amp;nbsp;&amp;nbsp;&lt;a href=\&quot;file://&quot; + baseFile + &quot;.properties\&quot; target=\&quot;mainFrame\&quot;\&quot;&gt;Property file&lt;/a&gt;&lt;br&gt;\n&quot;)
+<span class="nc" id="L707">	      .append(&quot;&lt;/td&gt;&quot;)</span>
+<span class="nc" id="L708">	      .append(&quot;&lt;/tr&gt;&lt;/table&gt;\n&quot;)</span>
+<span class="nc" id="L709">	      .append(&quot;&lt;/td&gt;&lt;/tr&gt;&lt;p/&gt;\n&quot;)</span>
+	      ;
+
+<span class="nc" id="L712">	    tableOfContents.append(&quot;&lt;/table&gt;\n&quot;);</span>
+<span class="nc" id="L713">	  }</span>
+
+	  /**
+	   * Writes a property file for each suite result.
+	   *
+	   * @param xmlSuite
+	   * @param suite
+	   */
+	  private void generateSuites(XmlSuite xmlSuite, ISuite suite) {
+<span class="nc" id="L722">	    Map&lt;String, ISuiteResult&gt; suiteResults = suite.getResults();</span>
+
+<span class="nc bnc" id="L724" title="All 2 branches missed.">	    for (ISuiteResult sr : suiteResults.values()) {</span>
+<span class="nc" id="L725">	      ITestContext testContext = sr.getTestContext();</span>
+<span class="nc" id="L726">	      StringBuffer sb = new StringBuffer();</span>
+
+<span class="nc bnc" id="L728" title="All 2 branches missed.">	      for (ISuiteResult suiteResult : suiteResults.values()) {</span>
+<span class="nc" id="L729">	        sb.append(suiteResult.toString());</span>
+	      }
+<span class="nc" id="L731">	      Utils.writeFile(getOutputDirectory(xmlSuite), testContext.getName() + &quot;.properties&quot;, sb.toString());</span>
+	    }
+<span class="nc" id="L733">	  }</span>
+
+//	public void generateReport(List&lt;XmlSuite&gt; xmlSuites, List&lt;ISuite&gt; suites,
+//			String outputDirectory) {
+//		//Iterating over each suite included in the test
+//        for (Object suite : suites) {
+//        	ISuite is = (ISuite) suite;
+//            //Following code gets the suite name
+//            String suiteName = is.getName();
+//	    //Getting the results for the said suite
+//	    Map suiteResults = is.getResults();
+//	    for (Object sr : suiteResults.values()) {
+//	    	ISuiteResult isr = (ISuiteResult) sr;
+//	        ITestContext tc = isr.getTestContext();
+//	        CommonUtil.sop(&quot;Passed tests for suite '&quot; + suiteName +
+//	             &quot;' is:&quot; + tc.getPassedTests().getAllResults().size());
+//	        CommonUtil.sop(&quot;Failed tests for suite '&quot; + suiteName +
+//	             &quot;' is:&quot; + 
+//	             tc.getFailedTests().getAllResults().size());
+//	        CommonUtil.sop(&quot;Skipped tests for suite '&quot; + suiteName +
+//	             &quot;' is:&quot; + 
+//	             tc.getSkippedTests().getAllResults().size());
+//	      }
+//        }
+//
+//	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

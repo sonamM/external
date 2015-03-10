@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TestAmazonMainPage.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">functionalTests</a> &gt; <a href="index.source.html" class="el_package">com.etouch.amazon.pages.test</a> &gt; <span class="el_source">TestAmazonMainPage.java</span></div><h1>TestAmazonMainPage.java</h1><pre class="source lang-java linenums">package com.etouch.amazon.pages.test;
+
+import javax.validation.constraints.AssertTrue;
+
+import com.etouch.taf.core.resources.WaitCondition;
+import com.etouch.taf.tools.defect.IDefectManager;
+import com.etouch.taf.util.CommonUtil;
+import com.etouch.taf.util.DateUtil;
+import com.etouch.taf.util.LogUtil;
+import com.etouch.taf.util.SoftAssertor;
+import com.etouch.amazon.common.BaseTest;
+
+import org.openqa.selenium.WebDriver;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.etouch.taf.core.TestBedManager;
+import com.etouch.taf.core.datamanager.excel.annotations.IExcelDataFiles;
+import com.etouch.taf.core.datamanager.excel.TafExcelDataProvider;
+import com.etouch.taf.core.datamanager.excel.TestParameters;
+import com.etouch.taf.core.datamanager.excel.annotations.ITafExcelDataProviderInputs;
+import com.etouch.taf.core.exception.PageException;
+import com.etouch.amazon.common.BaseTest;
+import com.etouch.amazon.pages.AmazonMainPage;
+import com.etouch.taf.webui.selenium.WebPage;
+
+import java.io.IOException;
+import java.awt.AWTException;
+
+
+@IExcelDataFiles(excelDataFiles = { &quot;file1=src/test/resources/testdata/amazon.xls&quot; })
+//@IExcelDataFiles(excelDataFiles = { &quot;file1=stageData&quot; })
+<span class="fc" id="L35">public class TestAmazonMainPage extends BaseTest {</span>
+<span class="fc" id="L36">	private String url = &quot;http://www.amazon.com/&quot;;</span>
+	private WebPage webPage;
+	private AmazonMainPage mainPage;
+
+	//required for jira
+<span class="fc" id="L41">	String url3 =TestBedManager.INSTANCE.getDefectConfig().getUrl3();</span>
+<span class="fc" id="L42">	String issueUrl = TestBedManager.INSTANCE.getDefectConfig().getIssueUrl();</span>
+<span class="fc" id="L43">	String username = TestBedManager.INSTANCE.getDefectConfig().getUsername();</span>
+<span class="fc" id="L44">	String password = TestBedManager.INSTANCE.getDefectConfig().getPassword();</span>
+<span class="fc" id="L45">	String keys = TestBedManager.INSTANCE.getDefectConfig().getKeys();</span>
+	
+	//required for rally
+<span class="fc" id="L48">	private static final String DEFECT_PROP = null;</span>
+<span class="fc" id="L49">	private static final String STORY_ID = null;</span>
+<span class="fc" id="L50">	String PROJECT_ID = TestBedManager.INSTANCE.getDefectConfig().getProjectId();</span>
+<span class="fc" id="L51">	String DEFECT_OWNER =TestBedManager.INSTANCE.getDefectConfig().getDefectOwner();</span>
+<span class="fc" id="L52">	String WORKSPACE_ID  =TestBedManager.INSTANCE.getDefectConfig().getWorkspaceId();</span>
+	
+	@BeforeClass
+	public void prepareBeforeClass() throws Exception {
+		try {
+			
+<span class="fc" id="L58">			webPage = new WebPage();</span>
+<span class="fc" id="L59">			mainPage = new AmazonMainPage(url, webPage);</span>
+<span class="fc" id="L60">		}</span>
+
+<span class="nc" id="L62">		catch (Exception e) {</span>
+<span class="nc" id="L63">			CommonUtil.sop(&quot;errr is &quot; + e);</span>
+<span class="nc" id="L64">			SoftAssertor.addVerificationFailure(e.getMessage());</span>
+		}
+<span class="fc" id="L66">	}</span>
+
+	@AfterClass(alwaysRun = true)
+	public void tearDown() {
+
+<span class="fc" id="L71">		WebDriver driver = (WebDriver) TestBedManager.INSTANCE</span>
+<span class="fc" id="L72">				.getCurrentTestBed().getDriver();</span>
+<span class="fc" id="L73">		CommonUtil.sop(&quot;At tear down &quot;+ driver);</span>
+		try {
+<span class="nc" id="L75">			driver.wait(150000);</span>
+<span class="pc" id="L76">		} catch (Exception e) {</span>
+			//SoftAssertor.addVerificationFailure(e.getMessage());
+		}
+<span class="fc" id="L79">		driver.close();</span>
+<span class="fc" id="L80">		driver.quit();</span>
+//		mainPage.stopRecording();
+
+<span class="fc" id="L83">	}</span>
+
+	// Testing for preSigIn 
+	//@Test(dataProvider = &quot;tafDataProvider&quot;, dataProviderClass = TafExcelDataProvider.class, priority = 1)
+	//@ITafExcelDataProviderInputs(excelFile = &quot;file1&quot;, excelsheet = &quot;CISCO&quot;, dataKey = &quot;Authentication&quot;)
+	@Test
+	//public void testPreSignIn(TestParameters inputs) throws PageException {
+	public void testPreSignIn()	{
+	try {
+<span class="fc" id="L92">			CommonUtil.sop(&quot;Starting test case 1&quot;);</span>
+			
+			//CommonUtil.sop (&quot; test data from xls : &quot; + inputs.getParamMap().get(&quot;uname&quot;) );
+<span class="fc" id="L95">			String actualURL = &quot;&quot;;</span>
+<span class="fc" id="L96">			String expectedURL = &quot;&quot;;</span>
+<span class="fc" id="L97">			mainPage.PreSignIn();</span>
+<span class="fc" id="L98">			actualURL = mainPage.getPageUrl();</span>
+			
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">		if (actualURL == &quot;https://www.amazon.com/ap/signin?_encoding=UTF8&amp;openid.assoc_handle=usflex&amp;openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&amp;openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&amp;openid.mode=checkid_setup&amp;openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&amp;openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&amp;openid.pape.max_auth_age=0&amp;openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dgno_signin&quot;);</span>
+		{
+			
+<span class="fc" id="L103">			CommonUtil.sop(&quot;this is same for test 1&quot;);</span>
+		}
+
+<span class="pc" id="L106">		} catch (AssertionError e) {</span>
+<span class="nc" id="L107">			CommonUtil.sop(&quot;the test case 1 failed&quot;);</span>
+
+<span class="nc" id="L109">		} catch (InterruptedException e) {</span>
+			// TODO Auto-generated catch block
+<span class="nc" id="L111">			SoftAssertor.addVerificationFailure(e.getMessage());</span>
+<span class="nc" id="L112">			e.printStackTrace();</span>
+			
+		}
+<span class="nc" id="L115">		catch(Exception e)</span>
+		{
+<span class="nc" id="L117">			SoftAssertor.addVerificationFailure(e.getMessage());</span>
+<span class="nc" id="L118">			e.printStackTrace();</span>
+		}
+<span class="fc" id="L120">	}</span>
+
+	//@Test
+	@Test(dataProvider = &quot;tafDataProvider&quot;, dataProviderClass = TafExcelDataProvider.class, priority = 1)
+	@ITafExcelDataProviderInputs(excelFile = &quot;file1&quot;, excelsheet = &quot;AMAZON&quot;, dataKey = &quot;AuthenticationFail&quot;)
+	public void testSignIn(TestParameters inputs) throws PageException {
+
+	//public void testSignIn() throws PageException {
+		try {
+<span class="nc" id="L129">			CommonUtil.sop(&quot;Starting test case 2&quot;);</span>
+<span class="nc" id="L130">			String actualURL = &quot;&quot;;</span>
+<span class="nc" id="L131">			String expectedURL = &quot;&quot;;</span>
+
+			// actualURL =
+			// &quot;https://www.amazon.com/ap/signin?_encoding=UTF8&amp;openid.assoc_handle=usflex&amp;openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&amp;openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&amp;openid.mode=checkid_setup&amp;openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&amp;openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&amp;openid.pape.max_auth_age=0&amp;openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fcss%2Fhomepage.html%3Fie%3DUTF8%26ref_%3Dgno_yam_ya&quot;;
+<span class="nc" id="L135">			mainPage.SignIn();</span>
+<span class="nc" id="L136">			CommonUtil.sop(&quot;this is here 2&quot;);</span>
+<span class="nc" id="L137">			actualURL = webPage.getCurrentUrl();</span>
+<span class="nc" id="L138">			expectedURL = &quot;https://www.amazon.com/gp/yourstore/home?ie=UTF8&amp;ref_=gno_signin&amp;&quot;;</span>
+			
+			/*if (actualURL == &quot;https://www.amazon.com/ap/signin?_encoding=UTF8&amp;openid.assoc_handle=usflex&amp;openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&amp;openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&amp;openid.mode=checkid_setup&amp;openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&amp;openid.ns.pape=http%3A%2F%2Fspecs.openid.net%2Fextensions%2Fpape%2F1.0&amp;openid.pape.max_auth_age=0&amp;openid.return_to=https%3A%2F%2Fwww.amazon.com%2Fgp%2Fyourstore%2Fhome%3Fie%3DUTF8%26ref_%3Dgno_signin&quot;);
+			{
+				
+				CommonUtil.sop(&quot;this is same for test 2&quot;);
+			}*/
+			
+<span class="nc" id="L146">			Assert.assertEquals(actualURL,&quot;https://www.google.com&quot;, &quot;URL did not matched&quot;);</span>
+			
+
+<span class="pc" id="L149">		} catch (AssertionError e) {</span>
+<span class="fc" id="L150">			CommonUtil.sop(&quot;the test case 2 failed&quot;);</span>
+			
+<span class="fc" id="L152">			String SEARCH_DEFECT_NAME = inputs.getParamMap().get(&quot;SearchDefectName&quot;);	</span>
+<span class="fc" id="L153">			String SEARCH_TEST_ID =  inputs.getParamMap().get(&quot;RallyTestCaseID&quot;);</span>
+<span class="fc" id="L154">			String DEFECT_SEVERITY =  inputs.getParamMap().get(&quot;DefectSeverity&quot;);</span>
+<span class="fc" id="L155">			String DEFECT_NOTES =  inputs.getParamMap().get(&quot;DefectNotes&quot;);</span>
+			
+		//	mainPage.logAndCreateADefect(TestBedManager.INSTANCE.getDefect(),DEFECT_PROP,SEARCH_TEST_ID, WORKSPACE_ID, PROJECT_ID,  STORY_ID, SEARCH_DEFECT_NAME, DEFECT_SEVERITY,DEFECT_OWNER,DEFECT_NOTES,e.getMessage());	
+			
+			//defect logging method for jira
+			//mainPage.logAndCreateADefect(TestBedManager.INSTANCE.getDefect(),url3, issueUrl, username, password,keys);
+		
+			//mainPage.getScreenshot();
+			
+<span class="fc" id="L164">			SoftAssertor.addVerificationFailure(e.getMessage());</span>
+<span class="fc" id="L165">		    e.printStackTrace();</span>
+
+		}
+<span class="nc" id="L168">		catch (InterruptedException e) {</span>
+			// TODO Auto-generated catch block
+<span class="nc" id="L170">			SoftAssertor.addVerificationFailure(e.getMessage());</span>
+<span class="nc" id="L171">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L173">		catch(Exception e)</span>
+		{
+<span class="nc" id="L175">			SoftAssertor.addVerificationFailure(e.getMessage());</span>
+<span class="nc" id="L176">			e.printStackTrace();</span>
+		}
+
+<span class="fc" id="L179">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

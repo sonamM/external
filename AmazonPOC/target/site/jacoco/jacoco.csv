@@ -1,0 +1,13 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+functionalTests,com.etouch.report,TestNGReporter.new Comparator() {...},11,0,0,0,3,0,2,0,2,0
+functionalTests,com.etouch.report,TestNGReporter,2088,0,142,0,401,0,96,0,25,0
+functionalTests,com.etouch.amazon.pages.test,TestMobile,6,0,0,0,3,0,2,0,2,0
+functionalTests,com.etouch.amazon.pages.test,TestCommon,6,0,0,0,3,0,2,0,2,0
+functionalTests,com.etouch.amazon.pages.test,TestAmazonMainPage,68,140,1,1,25,41,1,6,0,6
+functionalTests,com.etouch.amazon.pages.test,TestWeb,6,0,0,0,3,0,2,0,2,0
+functionalTests,com.etouch.amazon.common,CommonPage,384,19,14,0,74,7,16,3,9,3
+functionalTests,com.etouch.amazon.common,ReportConfig,3,0,0,0,1,0,1,0,1,0
+functionalTests,com.etouch.amazon.common,BaseTest,76,87,6,0,22,20,7,5,4,5
+functionalTests,com.etouch.amazon.common,iOSDeviceTest,76,0,0,0,22,0,2,0,2,0
+functionalTests,com.etouch.amazon.pages,AmazonMainPage,44,38,0,0,15,15,0,4,0,4
+functionalTests,com.etouch.amazon.listener,SuiteListener,31,137,11,5,8,36,8,6,0,6

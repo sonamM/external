@@ -1,0 +1,10 @@
+-------------------------------------------------------------------------------
+Test set: com.etouch.amazon.common.TestAmazonUnit
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 37.098 sec <<< FAILURE! - in com.etouch.amazon.common.TestAmazonUnit
+test(com.etouch.amazon.common.TestAmazonUnit)  Time elapsed: 37.093 sec  <<< FAILURE!
+java.lang.AssertionError: Exception during execution of Test methods
+	at org.testng.Assert.fail(Assert.java:94)
+	at com.etouch.taf.util.SoftAssertor.displayAssertErrors(SoftAssertor.java:210)
+	at com.etouch.amazon.common.TestAmazonUnit.test(TestAmazonUnit.java:54)
+

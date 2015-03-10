@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BaseTest.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">functionalTests</a> &gt; <a href="index.source.html" class="el_package">com.etouch.amazon.common</a> &gt; <span class="el_source">BaseTest.java</span></div><h1>BaseTest.java</h1><pre class="source lang-java linenums">package com.etouch.amazon.common;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
+
+import org.apache.commons.logging.Log;
+import org.openqa.selenium.WebDriver;
+import org.testng.ITestContext;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.xml.Parser;
+import org.testng.xml.XmlSuite;
+import org.xml.sax.SAXException;
+
+import com.etouch.taf.core.TestBed;
+import com.etouch.taf.core.TestBedManager;
+import com.etouch.taf.core.TestSuiteManager;
+import com.etouch.taf.core.config.TestBedConfig;
+import com.etouch.taf.core.config.TestBedManagerConfiguration;
+import com.etouch.taf.core.driver.DriverBuilder;
+import com.etouch.taf.core.exception.DefectException;
+import com.etouch.taf.core.exception.MonitorException;
+import com.etouch.taf.core.exception.DriverException;
+//import com.etouch.taf.core.monitor.gridmonitor.SeleniumMonitor;
+import com.etouch.taf.util.FileUtils;
+import com.etouch.taf.util.LogUtil;
+
+
+/**
+ * Base test that all the test classes should extend.
+ * This class initializes {@link TestBedManager} based on configuration file input
+ *
+ * @author eTouch Systems Corporation
+ *
+ */
+
+<span class="fc" id="L45">public class BaseTest {</span>
+
+<span class="fc" id="L47">	static Log log = LogUtil.getLog(BaseTest.class);</span>
+
+<span class="fc" id="L49">	protected TestBedManager testBedManager = TestBedManager.INSTANCE;</span>
+<span class="fc" id="L50">	private static String TEST_CONFIG_FILE_PARAM = &quot;configFileName&quot;;</span>
+<span class="fc" id="L51">	private static String TEST_SUITE_FILE_PARAM =&quot;testSuiteFileName&quot;;</span>
+<span class="fc" id="L52">	private static String TEST_MONITOR_FILE_PARAM = &quot;monitorFileName&quot;;</span>
+<span class="fc" id="L53">	private static String DEFECT_FILE = &quot;defectFileName&quot;;</span>
+<span class="fc" id="L54">	protected static String defect_properties_file = null;</span>
+
+<span class="fc" id="L56">	public String BASE_URL = null;</span>
+<span class="fc" id="L57">	public String BASE_URL2 = null;</span>
+<span class="fc" id="L58">	public long startTime = 0;</span>
+<span class="fc" id="L59">    public int methodNum = 0;</span>
+
+    /**
+     * @param method
+     */
+	@BeforeMethod()
+	public void printTimeStart(Method method) {
+<span class="fc" id="L66">		methodNum = methodNum + 1;</span>
+<span class="fc" id="L67">		log.info(&quot;&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt; Starting method &quot; + methodNum + &quot;::&quot; + method.getName() + &quot;&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;.&lt;&quot;);</span>
+<span class="fc" id="L68">		startTime = System.currentTimeMillis();</span>
+<span class="fc" id="L69">	}</span>
+
+	/**
+	 * @param method
+	 */
+	@AfterMethod()
+	public void printTimeTaken(Method method) {
+<span class="fc" id="L76">		log.info(&quot;&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt; Ending method &quot; + methodNum + &quot;::&quot; + method.getName() + &quot;&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;.&gt;Time Taken ::&quot; + (System.currentTimeMillis() - startTime) / 1000</span>
+<span class="fc" id="L77">		        + &quot; Seconds&quot;);</span>
+<span class="fc" id="L78">	}</span>
+
+//	public static void main(String args[]){
+//		
+//		String configFileName = &quot;/Users/eTouch/Documents/workspace-eTaap/AmazonPOC/src/main/java/devConfig.yml&quot;;
+//		InputStream in=null;
+//		try {
+//			in = convertFileToInputStream(configFileName);
+//		} catch (DriverException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		try {
+//			TestBedManager.INSTANCE.setConfig(in);
+//		} catch (DriverException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		} catch (DefectException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		try {
+//			exceuteTestNGFile();
+//		} catch (DriverException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (DefectException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		
+//		System.out.println(&quot;Test Suites are completed&quot;);
+//		
+//	}
+	
+	@BeforeSuite()
+	
+	private static void setupConfig(ITestContext configParameters,@Optional(&quot;FF&quot;)String browserName)
+			throws DriverException, DefectException {
+		
+<span class="nc" id="L119">	}</span>
+
+	private static InputStream convertFileToInputStream(String fileName) throws DriverException
+	{
+<span class="nc" id="L123">		InputStream ipStream=null;</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">		if(fileName != null){</span>
+			
+			try {
+<span class="nc" id="L127">				ipStream = new FileInputStream(new File(fileName));</span>
+<span class="nc" id="L128">			} catch (FileNotFoundException e) {</span>
+				// TODO Auto-generated catch block
+<span class="nc" id="L130">				log.error(e.getMessage());</span>
+<span class="nc" id="L131">				e.printStackTrace();</span>
+			}
+<span class="nc" id="L133">		}else{</span>
+<span class="nc" id="L134">			log.error(&quot; File name is null - &quot; + fileName);</span>
+<span class="nc" id="L135">			throw new DriverException(</span>
+<span class="nc" id="L136">					&quot;failed to read profile configuration/TestNG, file name is missing&quot;);</span>
+		}
+<span class="nc" id="L138">		return ipStream;</span>
+	}
+	
+	
+	
+	@BeforeClass(alwaysRun = true)
+	public void loadConfig() throws DriverException, DefectException {
+		
+
+		//TODO: commented by Sophia Ghins
+		//TestBedManagerConfiguration profile = new TestBedManagerConfiguration(configFile);
+		//BASE_URL = profile.getBaseURL();
+		//BASE_URL2 = profile.getBaseUrl2();
+
+		//BASE_URL = testBedManager.getProfile().getBaseURL();
+		//BASE_URL2 = testBedManager.getProfile().getBaseUrl2();
+		
+<span class="fc" id="L155">	}</span>
+	
+	
+		@AfterClass(alwaysRun=true)
+	public void tearDown(){
+			
+<span class="nc" id="L161">	DriverBuilder driver=(DriverBuilder)TestBedManager.INSTANCE.getCurrentTestBed().getDriver();		</span>
+	try {
+<span class="nc" id="L163">		driver.wait(150000);</span>
+<span class="nc" id="L164">	} catch (Exception e) {</span>
+<span class="nc" id="L165">		log.error(e.getMessage());</span>
+	}
+	//driver.close();
+	//driver.quit();
+			
+
+<span class="nc" id="L171">	}</span>
+
+	public String constructURL(String inputURL)
+	{
+<span class="nc bnc" id="L175" title="All 2 branches missed.">		if(inputURL.contains(&quot;&lt;baseurl&gt;&quot;))</span>
+<span class="nc" id="L176">			inputURL = inputURL.replace(&quot;&lt;baseurl&gt;&quot;, BASE_URL);</span>
+<span class="nc bnc" id="L177" title="All 2 branches missed.">		else if(inputURL.contains(&quot;&lt;baseurl2&gt;&quot;))</span>
+<span class="nc" id="L178">			inputURL = inputURL.replace(&quot;&lt;baseurl2&gt;&quot;, BASE_URL2);</span>
+
+<span class="nc" id="L180">		return inputURL;</span>
+	}
+
+	
+	
+	
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
