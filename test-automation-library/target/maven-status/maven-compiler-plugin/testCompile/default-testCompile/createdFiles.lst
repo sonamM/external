@@ -1,0 +1,10 @@
+com/etouch/taf/core/datamanager/excel/test/XLS_ReaderTest.class
+com/etouch/taf/tools/tfsclient/test/VersionControlHandlerTest.class
+com/etouch/taf/mobile/experitest/cloud/test/ExperitestCloudDriverTest.class
+com/etouch/taf/core/driver/web/test/ChromeDriverTest.class
+com/etouch/taf/core/driver/web/test/SafariDriverTest.class
+com/etouch/taf/core/driver/web/test/FirefoxDriverTest.class
+com/etouch/taf/core/driver/web/test/IEDriverTest.class
+com/etouch/taf/core/test/util/TafTestUtil.class
+com/etouch/taf/core/test/suite/TestSuite.class
+com/etouch/taf/core/datamanager/excel/test/Xlsx_ReaderTest.class

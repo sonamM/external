@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SoftAssertor.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Automation Library</a> &gt; <a href="index.source.html" class="el_package">com.etouch.taf.util</a> &gt; <span class="el_source">SoftAssertor.java</span></div><h1>SoftAssertor.java</h1><pre class="source lang-java linenums">/*
+ * 
+ */
+package com.etouch.taf.util;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javassist.bytecode.Descriptor.Iterator;
+
+import org.apache.commons.logging.Log;
+import org.testng.Assert;
+import org.testng.ITestResult;
+import org.testng.Reporter;
+
+
+
+// TODO: Auto-generated Javadoc
+/**
+ * The Class SoftAssertor.
+ */
+<span class="nc" id="L25">public class SoftAssertor {</span>
+	
+	/** The log. */
+<span class="nc" id="L28">	static Log log=LogUtil.getLog(SoftAssertor.class);</span>
+	
+	/** The verification failures map. */
+<span class="nc" id="L31">	private static Map&lt;ITestResult,List&lt;String&gt;&gt; verificationFailuresMap = new HashMap&lt;ITestResult,List&lt;String&gt;&gt;();</span>
+	
+	 
+    /**
+     * Assert true.
+     *
+     * @param condition the condition
+     * @param errMsg the err msg
+     */
+    public static void assertTrue(boolean condition, String errMsg) {
+    	try {
+<span class="nc" id="L42">    		Assert.assertTrue(condition);</span>
+<span class="nc" id="L43">    	} catch(Throwable e) {</span>
+<span class="nc" id="L44">    		addVerificationFailure(errMsg + &quot; Exception msg: &quot;+e.getMessage());</span>
+    		
+    	}
+<span class="nc" id="L47">    }</span>
+ 
+    /**
+     * Assert false.
+     *
+     * @param condition the condition
+     * @param errMsg the err msg
+     */
+    public static void assertFalse(boolean condition, String errMsg)  {
+    	try {
+<span class="nc" id="L57">    		Assert.assertFalse(condition);</span>
+<span class="nc" id="L58">	} catch(Throwable e) {</span>
+<span class="nc" id="L59">    		addVerificationFailure(errMsg + &quot; Exception msg: &quot;+e.getMessage());</span>
+    		
+	}
+<span class="nc" id="L62">    }</span>
+ 
+    /**
+     * Assert equals.
+     *
+     * @param actual the actual
+     * @param expected the expected
+     * @param errMsg the err msg
+     */
+    public static void assertEquals(Object actual, Object expected, String errMsg)  {
+    	try {
+<span class="nc" id="L73">    		Assert.assertEquals(actual, expected);</span>
+<span class="nc" id="L74">		} catch(Throwable e) {</span>
+<span class="nc" id="L75">    		addVerificationFailure(errMsg + &quot; Exception msg: &quot;+e.getMessage());</span>
+    		
+		}
+<span class="nc" id="L78">    }</span>
+    
+    /**
+     * Assert true.
+     *
+     * @param condition the condition
+     */
+    public static void assertTrue(boolean condition) {
+    	try {
+<span class="nc" id="L87">    		Assert.assertTrue(condition);</span>
+<span class="nc" id="L88">    	} catch(Throwable e) {</span>
+<span class="nc" id="L89">    		addVerificationFailure(&quot; Exception msg: &quot;+e.getMessage());</span>
+    		
+    	}
+<span class="nc" id="L92">    }</span>
+ 
+    /**
+     * Assert false.
+     *
+     * @param condition the condition
+     */
+    public static void assertFalse(boolean condition)  {
+    	try {
+<span class="nc" id="L101">    		Assert.assertFalse(condition);</span>
+<span class="nc" id="L102">	} catch(Throwable e) {</span>
+<span class="nc" id="L103">    		addVerificationFailure(&quot; Exception msg: &quot;+e.getMessage());</span>
+    		
+	}
+<span class="nc" id="L106">    }</span>
+ 
+    
+    /**
+     * Assert not null.
+     *
+     * @param actual the actual
+     * @param errMsg the err msg
+     */
+    public static void assertNotNull(Object actual, String errMsg)  {
+    	try {
+<span class="nc" id="L117">    		Assert.assertNotNull(actual);</span>
+<span class="nc" id="L118">		} catch(Throwable e) {</span>
+<span class="nc" id="L119">    		addVerificationFailure(errMsg+&quot; Exception msg: &quot;+e.getMessage());    		</span>
+		}
+<span class="nc" id="L121">    }</span>
+ 
+	/**
+	 * Gets the verification failures.
+	 *
+	 * @return the verification failures
+	 */
+	public static List&lt;String&gt; getVerificationFailures() {
+<span class="nc" id="L129">		List&lt;String&gt; verificationFailures = verificationFailuresMap.get(Reporter.getCurrentTestResult());</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">		return verificationFailures == null ? new ArrayList&lt;String&gt;() : verificationFailures;</span>
+	}
+	
+	/**
+	 * Adds the verification failure.
+	 *
+	 * @param e the e
+	 */
+	public static void addVerificationFailure(String e) {
+<span class="nc" id="L139">		List&lt;String&gt; verificationFailures = getVerificationFailures();</span>
+<span class="nc" id="L140">		verificationFailures.add(e);</span>
+<span class="nc" id="L141">		verificationFailuresMap.put(Reporter.getCurrentTestResult(), verificationFailures);</span>
+<span class="nc" id="L142">	}</span>
+
+	/**
+	 * Assert fail.
+	 *
+	 * @param errMsg the err msg
+	 */
+	public static void assertFail(String errMsg) {
+		
+		try {
+<span class="nc" id="L152">    		Assert.fail(errMsg);</span>
+<span class="nc" id="L153">		} catch(Throwable e) {</span>
+<span class="nc" id="L154">    		addVerificationFailure(errMsg+&quot; Exception msg: &quot;+e.getMessage());    		</span>
+		}
+		
+<span class="nc" id="L157">	}</span>
+
+	/**
+	 * Assert equals.
+	 *
+	 * @param actual the actual
+	 * @param expected the expected
+	 */
+	public static void assertEquals(Object actual, Object expected)  {
+    	try {
+<span class="nc" id="L167">    		Assert.assertEquals(actual, expected);</span>
+<span class="nc" id="L168">		} catch(Throwable e) {</span>
+<span class="nc" id="L169">    		addVerificationFailure(&quot; Exception msg: &quot;+e.getMessage());</span>
+    		
+		}
+<span class="nc" id="L172">    }</span>
+
+	/**
+	 * Assert not null.
+	 *
+	 * @param actual the actual
+	 */
+	public static void assertNotNull(Object actual) {
+		try {
+<span class="nc" id="L181">    			Assert.assertNotNull(actual);</span>
+<span class="nc" id="L182">			} catch(Throwable e) {</span>
+<span class="nc" id="L183">    		addVerificationFailure(&quot;Exception msg: &quot;+e.getMessage());    		</span>
+		}
+		
+<span class="nc" id="L186">	}</span>
+	
+	/**
+	 * Display assert errors.
+	 */
+	public static void displayAssertErrors()
+	{
+<span class="nc bnc" id="L193" title="All 4 branches missed.">		if(verificationFailuresMap!=null &amp;&amp; verificationFailuresMap.size()&gt;0 )</span>
+		{
+<span class="nc" id="L195">			Set keys = verificationFailuresMap.keySet();</span>
+<span class="nc" id="L196">			java.util.Iterator&lt;ITestResult&gt; itr = keys.iterator();</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">			while(itr.hasNext())</span>
+			{
+<span class="nc" id="L199">				List&lt;String&gt; errorList = verificationFailuresMap.get(itr.next());</span>
+<span class="nc bnc" id="L200" title="All 4 branches missed.">				if(errorList!=null &amp;&amp; errorList.size()&gt;0)</span>
+				{
+<span class="nc bnc" id="L202" title="All 2 branches missed.">					for(int index=0; index&lt;errorList.size(); index++)</span>
+					{
+<span class="nc" id="L204">						log.error(errorList.get(index));					</span>
+					}
+					
+				}
+			}
+			
+<span class="nc" id="L210">			Assert.fail(&quot;Exception during execution of Test methods&quot;);</span>
+		}
+<span class="nc" id="L212">	}</span>
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

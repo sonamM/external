@@ -1,0 +1,952 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Rally.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Automation Library</a> &gt; <a href="index.source.html" class="el_package">com.etouch.taf.tools.rally</a> &gt; <span class="el_source">Rally.java</span></div><h1>Rally.java</h1><pre class="source lang-java linenums">package com.etouch.taf.tools.rally;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.logging.Log;
+
+import com.etouch.taf.core.TestBedManager;
+import com.etouch.taf.core.datamanager.excel.annotations.IExcelDataFiles;
+import com.etouch.taf.core.exception.DefectException;
+import com.etouch.taf.core.resources.DefectParameters;
+import com.etouch.taf.tools.defect.IDefectManager;
+import com.etouch.taf.util.CommonUtil;
+import com.etouch.taf.util.DateUtil;
+import com.etouch.taf.util.LogUtil;
+import com.etouch.taf.util.encrypt_decrypt;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.rallydev.rest.RallyRestApi;
+import com.rallydev.rest.request.CreateRequest;
+import com.rallydev.rest.request.DeleteRequest;
+import com.rallydev.rest.request.GetRequest;
+import com.rallydev.rest.request.QueryRequest;
+import com.rallydev.rest.request.UpdateRequest;
+import com.rallydev.rest.response.CreateResponse;
+import com.rallydev.rest.response.DeleteResponse;
+import com.rallydev.rest.response.GetResponse;
+import com.rallydev.rest.response.QueryResponse;
+import com.rallydev.rest.response.UpdateResponse;
+import com.rallydev.rest.util.Fetch;
+import com.rallydev.rest.util.QueryFilter;
+import com.rallydev.rest.util.Ref;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+
+/**
+ * RallyIntegration exposes API to integrate with Rally.
+ * 
+ * @author eTouch Systems Corporation
+ * @version 1.0
+ *
+ */
+
+public class Rally implements IDefectManager{
+
+<span class="nc" id="L61">	private static Log log = LogUtil.getLog(Rally.class);</span>
+	
+	private RallyInfo rallyInfo;
+
+	private RallyRestApi restApi;
+	
+	private String defectStatus;
+	
+	private String defectOID;
+	
+<span class="nc" id="L71">	public Rally(RallyInfo rallyInfo) throws DefectException{</span>
+<span class="nc" id="L72">		this.rallyInfo = rallyInfo;</span>
+<span class="nc" id="L73">	}</span>
+
+	public void setRallyInfo(RallyInfo rallyInfo) {
+<span class="nc" id="L76">		this.rallyInfo = rallyInfo;</span>
+<span class="nc" id="L77">	}</span>
+	
+	public String getDefectStatus() {
+<span class="nc" id="L80">		return defectStatus;</span>
+	}
+
+	public void setDefectStatus(String rallyStatus) {
+<span class="nc" id="L84">		this.defectStatus = rallyStatus;</span>
+<span class="nc" id="L85">	}</span>
+	
+	private String getDefectOID() {
+<span class="nc" id="L88">		return defectOID;</span>
+	}
+
+	private void setDefectOID(String defectOID) {
+<span class="nc" id="L92">		this.defectOID = defectOID;</span>
+<span class="nc" id="L93">	}</span>
+	
+   	/**
+   	 * Build a RequestInfo and create a rally defect 
+   	 * @param ri
+   	 * @param fileName
+   	 * @param testcaseId
+   	 * @param projId
+   	 * @param storyId
+   	 */	
+   public void createDefectBuilder(String defName, String testcaseId, String workspaceId, String projId, String DefSeverity,
+			                       String DefOwner, String DefNotes, String storyId){
+
+	 
+	 try{
+	 
+<span class="nc" id="L109">Map&lt;String, String&gt; reqMap = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L110">reqMap.put(RallyConstants.NAME, defName);</span>
+<span class="nc" id="L111">reqMap.put(RallyConstants.CREATEDATE, DateUtil.getCurrentDateTime(RallyConstants.CREATION_DATE_FORMAT));</span>
+<span class="nc" id="L112">reqMap.put(RallyConstants.TESTCASE, testcaseId);</span>
+<span class="nc" id="L113">reqMap.put(RallyConstants.PROJECT, projId);</span>
+<span class="nc" id="L114">reqMap.put(RallyConstants.SEVERITY, DefSeverity);</span>
+<span class="nc" id="L115">reqMap.put(RallyConstants.OWNER, DefOwner);</span>
+<span class="nc" id="L116">reqMap.put(RallyConstants.NOTES, DefNotes);</span>
+<span class="nc" id="L117">reqMap.put(RallyConstants.WORKSPACE, workspaceId);</span>
+//reqMap.put(&quot;Requirement&quot;, storyId);
+
+<span class="nc" id="L120">	RequestInfo reqInfo= new RequestInfo(RallyConstants.DEFECT, RallyConstants.CREATE, reqMap);</span>
+	try {
+<span class="nc" id="L122">			create(reqInfo);</span>
+<span class="nc" id="L123">			System.out.println(&quot;done with logging defect. Now updating the testcase result&quot;);</span>
+			
+<span class="nc" id="L125">		} catch (DefectException ex) {</span>
+<span class="nc" id="L126">		log.error(ex.getMessage());</span>
+<span class="nc" id="L127">		} catch (IOException e) {</span>
+			// TODO Auto-generated catch block
+<span class="nc" id="L129">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L131">		}catch(NullPointerException e){</span>
+<span class="nc" id="L132">		log.error(e.getMessage());</span>
+		}
+<span class="nc" id="L134">		}</span>
+ 	/*
+   	/**
+   	 * Verify if a defect already exists in Rally. If the defect exists, save the testcase formatted id, defect id and defect status
+   	 * @param ri
+   	 * @param fileName
+   	 * @param testcaseId
+   	 * @param projId
+   	 * @param storyId
+   	 * @param defName
+   	 */	
+	public boolean verifyDefectExists(String testcaseId, String projId, String storyId, String defName){
+<span class="nc" id="L146">		String formattedID = null;</span>
+<span class="nc" id="L147">		String testCaseRegex = &quot;^/testcase/&quot;;</span>
+<span class="nc" id="L148">		String formatRegex = &quot;^FormattedID[\\s]*:[\\s]*&quot;;</span>
+<span class="nc" id="L149">		String stateRegex = &quot;^.*State[\\s]*:[\\s]*&quot;;</span>
+<span class="nc" id="L150">		String objPreRegex = &quot;^ObjectID[\\s]*:[\\s]*&quot;;</span>
+<span class="nc" id="L151">		String objPostRegex = &quot;[\\s]*State[\\s]*:[\\s]*[\\w]*&quot;;</span>
+<span class="nc" id="L152">		RequestInfo rInfo = new RequestInfo();</span>
+		
+		//Retrieve the TestCase FormattedID using the TestCase OID 
+<span class="nc" id="L155">		String[] fetchParam = {RallyConstants.FORMATTED_ID};</span>
+<span class="nc" id="L156">		String[] filterArray = {RallyConstants.OBJECTID, RallyConstants.EQUALTO, testcaseId.replaceFirst(testCaseRegex, &quot;&quot;)};</span>
+<span class="nc" id="L157">		buildQueryReqInfo(rInfo, RallyConstants.TESTCASE, fetchParam, projId, filterArray);</span>
+		try {
+<span class="nc" id="L159">			List&lt;String&gt; list=getList(rInfo);</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">			if((list!=null)){</span>
+<span class="nc" id="L161">			formattedID = getList(rInfo).get(0);</span>
+			}
+<span class="nc" id="L163">		} catch (DefectException e) {</span>
+			//log.error(e.getMessage());
+<span class="nc" id="L165">			return false;</span>
+		}
+<span class="nc bnc" id="L167" title="All 2 branches missed.">		if(formattedID != null){</span>
+<span class="nc" id="L168">			formattedID = formattedID.replaceFirst(formatRegex, &quot;&quot;);</span>
+<span class="nc" id="L169">		}else{</span>
+<span class="nc" id="L170">			log.error(&quot;Failure to verify if defect exists: failure to retrieve testcase details for OID - &quot; + testcaseId);</span>
+<span class="nc" id="L171">			return false;</span>
+		}
+		        
+		//Retrieve all the defects related to the TestCase FormattedID 
+<span class="nc" id="L175">		fetchParam = new String[]{RallyConstants.OBJECTID, RallyConstants.STATE};</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">		if(formattedID!=null){</span>
+<span class="nc" id="L177">		filterArray = new String[]{RallyConstants.TESTCASEFID, RallyConstants.EQUALTO, formattedID, RallyConstants.AND_OPERATOR, RallyConstants.NAME, RallyConstants.EQUALTO, defName};</span>
+<span class="nc" id="L178">		}</span>
+		else{
+			
+<span class="nc" id="L181">			filterArray = new String[]{ RallyConstants.NAME, RallyConstants.EQUALTO, defName};</span>
+		}
+		
+<span class="nc" id="L184">		buildQueryReqInfo(rInfo, RallyConstants.DEFECT, fetchParam, projId, filterArray);</span>
+		try {
+<span class="nc" id="L186">			List&lt;String&gt; qlist = getList(rInfo);</span>
+<span class="nc bnc" id="L187" title="All 4 branches missed.">			if((qlist != null) &amp;&amp; qlist.size()&gt;0){</span>
+<span class="nc" id="L188">				String objIDStr = qlist.get(0).replaceFirst(objPreRegex, &quot;&quot;);</span>
+<span class="nc" id="L189">				setDefectOID(objIDStr.replaceFirst(objPostRegex, &quot;&quot;).trim());</span>
+<span class="nc" id="L190">				setDefectStatus(qlist.get(0).replaceFirst(stateRegex, &quot;&quot;).trim());</span>
+<span class="nc" id="L191">				return true;				</span>
+			}
+<span class="nc" id="L193">		} catch (DefectException e) {</span>
+<span class="nc" id="L194">			log.error(e.getMessage());</span>
+<span class="nc" id="L195">			return false;</span>
+		}		
+<span class="nc" id="L197">		return false;</span>
+	}
+	
+	public boolean verifyIfdefectClosed(){
+<span class="nc bnc" id="L201" title="All 6 branches missed.">		if(getDefectStatus() != null &amp;&amp; (getDefectStatus().equals(RallyConstants.STATUS_FIXED) || getDefectStatus().equals(RallyConstants.STATUS_CLOSED))){</span>
+<span class="nc" id="L202">			return true;</span>
+		}
+<span class="nc" id="L204">		return false;</span>
+	}
+	
+	public String queryTestCaseFormatID(String testcaseId, String projId, String storyId, String defName){
+<span class="nc" id="L208">		String formattedID = &quot;&quot;;</span>
+<span class="nc" id="L209">		String testCaseRegex = &quot;^/testcase/&quot;;</span>
+<span class="nc" id="L210">		String formatRegex = &quot;^FormattedID[\\s]*:[\\s]*&quot;;</span>
+<span class="nc" id="L211">		RequestInfo rInfo = new RequestInfo();</span>
+		
+		//Retrieve the TestCase FormattedID using the TestCase OID 
+<span class="nc" id="L214">		String[] fetchParam = {RallyConstants.FORMATTED_ID};</span>
+<span class="nc" id="L215">		String[] filterArray = {RallyConstants.OBJECTID, RallyConstants.EQUALTO, testcaseId.replaceFirst(testCaseRegex, &quot;&quot;)};</span>
+<span class="nc" id="L216">		buildQueryReqInfo(rInfo, RallyConstants.TESTCASE, fetchParam, projId, filterArray);</span>
+		try {
+<span class="nc bnc" id="L218" title="All 4 branches missed.">			if((getList(rInfo)!=null)&amp;&amp;(getList(rInfo).size()&gt;0)){</span>
+<span class="nc" id="L219">			formattedID = getList(rInfo).get(0);</span>
+			}
+<span class="nc" id="L221">		} catch (DefectException e) {</span>
+<span class="nc" id="L222">			log.error(e.getMessage());</span>
+		}
+<span class="nc bnc" id="L224" title="All 2 branches missed.">		if(formattedID != null){</span>
+<span class="nc" id="L225">			formattedID = formattedID.replaceFirst(formatRegex, &quot;&quot;);</span>
+		}
+<span class="nc" id="L227">		return formattedID;</span>
+	}
+	
+   	/**
+   	 * Retrieve the defect object ID 
+   	 * @param ri
+   	 * @param fileName
+   	 * @param testcaseId
+   	 * @param projId
+   	 * @param storyId
+   	 * @param defName
+   	 */	
+	public String queryDefectID(String testcaseId, String storyId, String projId, String defName){
+<span class="nc" id="L240">		String objPreRegex = &quot;^ObjectID[\\s]*:[\\s]*&quot;;</span>
+<span class="nc" id="L241">		RequestInfo rInfo = new RequestInfo();</span>
+<span class="nc" id="L242">		String[] fetchParam = new String[]{RallyConstants.OBJECTID};</span>
+		
+		//Retrieve the testcase format id
+<span class="nc" id="L245">		String tcFormattedID = queryTestCaseFormatID(testcaseId, projId, storyId, defName);</span>
+		//Retrieve all the defects related to the TestCase FormattedID 
+<span class="nc bnc" id="L247" title="All 4 branches missed.">		if(tcFormattedID!= null &amp;&amp; !tcFormattedID.isEmpty()){</span>
+<span class="nc" id="L248">			String[] filterArray = new String[]{RallyConstants.TESTCASEFID, RallyConstants.EQUALTO, tcFormattedID, RallyConstants.AND_OPERATOR, RallyConstants.NAME, RallyConstants.EQUALTO, defName};</span>
+<span class="nc" id="L249">			buildQueryReqInfo(rInfo, RallyConstants.DEFECT, fetchParam, projId, filterArray);</span>
+			try {
+<span class="nc" id="L251">				List&lt;String&gt; qlist = getList(rInfo);</span>
+<span class="nc bnc" id="L252" title="All 4 branches missed.">				if((qlist != null) &amp;&amp; !qlist.isEmpty()){</span>
+<span class="nc" id="L253">					setDefectOID(qlist.get(0).replaceFirst(objPreRegex, &quot;&quot;).trim());</span>
+					//setDefectOID(objIDStr.replaceFirst(objPostRegex, &quot;&quot;).trim());				
+				}
+<span class="nc" id="L256">			} catch (DefectException e) {</span>
+<span class="nc" id="L257">				log.error(e.getMessage());</span>
+			}
+		}
+<span class="nc" id="L260">		return getDefectOID();</span>
+	}
+	
+   	/**
+   	 * Retrieve the defect object ID 
+   	 * @param ri
+   	 * @param fileName
+   	 * @param testcaseId
+   	 * @param projId
+   	 * @param storyId
+   	 * @param defName
+   	 */	
+	public String queryDefectStatus(String testcaseId, String storyId, String projId, String defName){
+<span class="nc" id="L273">		String stateRegex = &quot;^.*State[\\s]*:[\\s]*&quot;;</span>
+<span class="nc" id="L274">		RequestInfo rInfo = new RequestInfo();</span>
+		
+		//Retrieve the testcase format id
+<span class="nc" id="L277">		String tcFormattedID = queryTestCaseFormatID(testcaseId, projId, storyId, defName);</span>
+		//Retrieve all the defects related to the TestCase FormattedID 
+<span class="nc" id="L279">		String[] fetchParam = new String[]{RallyConstants.STATE};</span>
+<span class="nc" id="L280">		String[] filterArray = new String[]{RallyConstants.TESTCASEFID, RallyConstants.EQUALTO, tcFormattedID, RallyConstants.AND_OPERATOR, RallyConstants.NAME, RallyConstants.EQUALTO, defName};</span>
+<span class="nc" id="L281">		buildQueryReqInfo(rInfo, RallyConstants.DEFECT, fetchParam, projId, filterArray);</span>
+		try {
+<span class="nc" id="L283">			List&lt;String&gt; qlist = getList(rInfo);</span>
+<span class="nc bnc" id="L284" title="All 4 branches missed.">			if((qlist != null) &amp;&amp; !qlist.isEmpty()){</span>
+<span class="nc" id="L285">				setDefectStatus(qlist.get(0).replaceFirst(stateRegex, &quot;&quot;).trim());</span>
+			}
+<span class="nc" id="L287">		} catch (DefectException e) {</span>
+<span class="nc" id="L288">			log.error(e.getMessage());</span>
+		}
+		
+<span class="nc" id="L291">		return getDefectStatus();</span>
+	}
+
+   	/**
+   	 * Retrieve the defect object ID 
+   	 * Note: example of queryByParam: String[] queryByParam = new String[]{IRallyParam.OBJECTID};
+   	 * example of fetchQueryRegex: String fetchQueryRegex = &quot;^ObjectID[\\s]*:[\\s]*&quot;;
+   	 * @param ri
+   	 * @param fileName
+   	 * @param testcaseId
+   	 * @param projId
+   	 * @param storyId
+   	 * @param defName
+   	 */	
+	public String queryDefect(String testcaseId, String storyId, String projId, final String defName, DefectParameters.IDefect queryByParam){
+<span class="nc" id="L306">		RequestInfo rInfo = new RequestInfo();</span>
+<span class="nc" id="L307">		String fetchQueryVal = null;</span>
+<span class="nc" id="L308">		String fetchQueryRegex = &quot;^.*&quot; + queryByParam.getParamType() + &quot;[\\s]*:[\\s]*&quot;;</span>
+		
+		//Retrieve the testcase format id
+<span class="nc" id="L311">		String tcFormattedID = queryTestCaseFormatID(testcaseId, projId, storyId, defName);</span>
+		//Retrieve all the defects related to the TestCase FormattedID 
+<span class="nc bnc" id="L313" title="All 4 branches missed.">		if(tcFormattedID!= null &amp;&amp; !tcFormattedID.isEmpty()){</span>
+<span class="nc" id="L314">			String[] fetchParamArray = new String[]{queryByParam.getParamType()};</span>
+<span class="nc" id="L315">			String[] filterArray = new String[]{RallyConstants.TESTCASEFID, RallyConstants.EQUALTO, tcFormattedID, RallyConstants.AND_OPERATOR, RallyConstants.NAME, RallyConstants.EQUALTO, defName};</span>
+<span class="nc" id="L316">			buildQueryReqInfo(rInfo, RallyConstants.DEFECT, fetchParamArray, projId, filterArray);</span>
+			try {
+<span class="nc" id="L318">				List&lt;String&gt; qlist = getList(rInfo);</span>
+<span class="nc bnc" id="L319" title="All 4 branches missed.">				if((qlist != null) &amp;&amp; !qlist.isEmpty()){</span>
+<span class="nc" id="L320">					fetchQueryVal = qlist.get(0).replaceFirst(fetchQueryRegex, &quot;&quot;).trim();				</span>
+				}
+<span class="nc" id="L322">			} catch (DefectException e) {</span>
+<span class="nc" id="L323">				log.error(e.getMessage());</span>
+			}
+		}
+<span class="nc" id="L326">		return fetchQueryVal;</span>
+	}	
+	
+   	/**
+   	 * Build a RequestInfo and update a rally defect 
+   	 * @param ri
+   	 * @throws DefectException
+   	 */	
+	public void reopenDefect(){
+		try{
+<span class="nc" id="L336">			String ref = &quot;/&quot; + RallyConstants.DEFECT + &quot;/&quot; + getDefectOID();</span>
+<span class="nc" id="L337">			RequestInfo reqInfo= new RequestInfo();</span>
+<span class="nc" id="L338">			reqInfo.setRefField(ref);</span>
+<span class="nc" id="L339">			reqInfo.addEntry(RallyConstants.UPDATE, RallyConstants.STATE, RallyConstants.STATUS_OPEN);</span>
+			try {
+<span class="nc" id="L341">				update(reqInfo);</span>
+<span class="nc" id="L342">			} catch (DefectException e) {</span>
+				// TODO Auto-generated catch block
+<span class="nc" id="L344">				log.error(e.getMessage());</span>
+			}
+<span class="nc" id="L346">		} finally{</span>
+<span class="nc" id="L347">			setDefectOID(null);</span>
+<span class="nc" id="L348">			setDefectStatus(null);</span>
+<span class="nc" id="L349">		}</span>
+<span class="nc" id="L350">	}	</span>
+	
+   	/**
+   	 * Build a RequestInfo and update a rally defect field/attribute
+   	 * @param ri
+   	 * @throws DefectException
+   	 */	
+	public boolean updateDefect(String testcaseId, String projId, String storyId, String defName, DefectParameters.IDefect updateKey, String updateValue){
+		try{
+<span class="nc bnc" id="L359" title="All 2 branches missed.">			if(verifyDefectExists(testcaseId, projId, storyId, defName)){</span>
+//				String tcFormattedID = queryTestCaseFormatID(testcaseId, projId, storyId, defName);
+//				setDefectOID(queryDefectID(projId, tcFormattedID, defName));
+				
+<span class="nc" id="L363">				String ref = &quot;/&quot; + RallyConstants.DEFECT + &quot;/&quot; + getDefectOID();</span>
+<span class="nc" id="L364">				RequestInfo reqInfo= new RequestInfo();</span>
+<span class="nc" id="L365">				reqInfo.setRefField(ref);</span>
+<span class="nc" id="L366">				reqInfo.addEntry(RallyConstants.UPDATE, updateKey.getParamType(), updateValue);</span>
+<span class="nc" id="L367">				update(reqInfo);	</span>
+<span class="nc" id="L368">				log.info(&quot;Successfully updated:&quot; + updateKey.getParamType());</span>
+<span class="nc" id="L369">				return true;</span>
+			}
+<span class="nc" id="L371">		}catch (DefectException e) {</span>
+<span class="nc" id="L372">				log.error(&quot;Error when updating defect: &quot; + e.getMessage());				</span>
+<span class="nc" id="L373">		}finally{</span>
+<span class="nc" id="L374">			setDefectOID(null);</span>
+<span class="nc" id="L375">		}</span>
+<span class="nc" id="L376">		return false;</span>
+	}
+	
+	/**
+	 * Close rally connection.
+	 * @throws DefectException
+	 */
+	public void closeDefect() throws DefectException{
+<span class="nc bnc" id="L384" title="All 2 branches missed.">		if(!CommonUtil.isNull(restApi)){</span>
+	        //Release resources
+	        try {
+<span class="nc" id="L387">				restApi.close();</span>
+<span class="nc" id="L388">			} catch (IOException e) {</span>
+<span class="nc" id="L389">	        	log.error(&quot;failed to close rally connection, message : &quot; + e.toString());</span>
+<span class="nc" id="L390">	        	throw new DefectException(&quot;failed to close rally connection, message : &quot; + e.toString());        	</span>
+<span class="nc" id="L391">			}finally{</span>
+<span class="nc" id="L392">				restApi=null;</span>
+<span class="nc" id="L393">			}</span>
+		}	 
+<span class="nc" id="L395">	}	</span>
+	
+   	/**
+   	 * Build the RequestInfo with arguments provided
+   	 * @param rInfo
+   	 * @param requestType
+   	 * @param fetchParam
+   	 * @param projId
+   	 * @param filterArray
+   	 */		
+	private void buildQueryReqInfo(RequestInfo rInfo, String requestType, String[] fetchParam, String projId, String[] filterArray){
+<span class="nc" id="L406">		rInfo.setRequestType(requestType);</span>
+<span class="nc" id="L407">		rInfo.setProjectOID(projId);</span>
+<span class="nc" id="L408">		rInfo.setScopeDown(true);</span>
+<span class="nc" id="L409">		rInfo.setFetch(fetchParam);</span>
+<span class="nc" id="L410">		ArrayList&lt;String&gt; filterList = new ArrayList&lt;String&gt;(Arrays.asList(filterArray));</span>
+<span class="nc" id="L411">		rInfo.setQueryFilter(filterList);	</span>
+<span class="nc" id="L412">		System.out.println(requestType + &quot; -- &quot; + projId + &quot; -- &quot; + fetchParam + &quot; -- &quot; +filterList);</span>
+<span class="nc" id="L413">	}</span>
+	
+	/**
+	 * Returns list of query result based on query parameters supplied using request info.
+	 * @param requestInfo Information related to request.
+	 * @return list of query result if successful.
+	 * @throws DefectException
+	 */
+	private List&lt;String&gt; getList(RequestInfo requestInfo) throws DefectException {
+<span class="nc" id="L422">		log.info(&quot;Start - getList&quot;);</span>
+<span class="nc" id="L423">		createInstance();</span>
+<span class="nc" id="L424">		List&lt;String&gt; lstResult = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">		if(CommonUtil.isNull(requestInfo)){</span>
+<span class="nc" id="L426">			log.error(&quot;Request Info is null - &quot;+ requestInfo);			</span>
+<span class="nc" id="L427">			throw new DefectException(&quot;failed to get list, request information is missing&quot;);</span>
+		}
+		
+        try {
+
+<span class="nc" id="L432">            log.info(&quot;Querying for top highest priority unfixed defects...&quot;);</span>
+<span class="nc" id="L433">            System.out.println(&quot;Query Request Info &quot; + requestInfo.getQueryFilter());</span>
+<span class="nc" id="L434">            QueryResponse qryResponse = getQueryResponse(requestInfo);</span>
+            
+            
+<span class="nc bnc" id="L437" title="All 2 branches missed.">            if (qryResponse.wasSuccessful()) {</span>
+<span class="nc" id="L438">            	log.info(String.format(&quot;\nTotal results: %d&quot;, qryResponse.getTotalResultCount()));</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">                for (JsonElement result : qryResponse.getResults()) {</span>
+<span class="nc" id="L440">                    JsonObject qryObject = result.getAsJsonObject();</span>
+<span class="nc" id="L441">                    String strFetch[] = requestInfo.getFetch();</span>
+<span class="nc" id="L442">                    String strPrintInfo = &quot;&quot;;</span>
+<span class="nc bnc" id="L443" title="All 4 branches missed.">                    if(strFetch != null &amp;&amp; strFetch.length != 0){</span>
+<span class="nc bnc" id="L444" title="All 2 branches missed.">                    	for(int i=0; i &lt; strFetch.length; i++){</span>
+<span class="nc" id="L445">                    		strPrintInfo = strPrintInfo + strFetch[i] + &quot; : &quot; + qryObject.get(strFetch[i]).getAsString() + &quot; &quot;;</span>
+                    	}
+                    }
+<span class="nc" id="L448">                    log.info(strPrintInfo);</span>
+<span class="nc" id="L449">                    lstResult.add(strPrintInfo);</span>
+                }
+<span class="nc" id="L451">            } else {</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">                for (String err : qryResponse.getErrors()) {</span>
+<span class="nc" id="L453">                    System.err.println(&quot;\t&quot; + err);</span>
+<span class="nc" id="L454">                    lstResult.add(err);</span>
+                }
+<span class="nc" id="L456">                log.error(&quot;Error in getting list : &quot; + lstResult);</span>
+<span class="nc" id="L457">                throw new DefectException(&quot;Error in getting list&quot; + lstResult);</span>
+            }
+<span class="nc" id="L459">        } catch (Exception e){</span>
+<span class="nc" id="L460">            log.error(&quot;Error in getting list, message : &quot; + e.toString());</span>
+<span class="nc" id="L461">            throw new DefectException(&quot;Error in getting list, message : &quot; + e.toString());</span>
+<span class="nc" id="L462">        } finally {</span>
+<span class="nc" id="L463">        	closeDefect();</span>
+<span class="nc" id="L464">    		log.info(&quot;End - getList&quot;);</span>
+<span class="nc" id="L465">        }</span>
+<span class="nc" id="L466">		return lstResult;</span>
+    }
+	
+	/**
+	 * Creates TestCase,Defects with or with out attachment etc.
+	 * @param requestInfo
+	 * @throws DefectException
+	 * @throws IOException 
+	 */
+	
+	///added by sonam 
+	
+	 public void create(RequestInfo requestInfo) throws DefectException, IOException{
+<span class="nc" id="L479">		log.info(&quot;Start - create&quot;);</span>
+<span class="nc" id="L480">		createInstance();</span>
+		
+<span class="nc bnc" id="L482" title="All 2 branches missed.">		if(CommonUtil.isNull(requestInfo)){</span>
+<span class="nc" id="L483">			log.error(&quot;Request Info is null - &quot;+ requestInfo);			</span>
+<span class="nc" id="L484">			throw new DefectException(&quot;failed to create, request information is missing&quot;);</span>
+		}
+        try {
+        	
+<span class="nc" id="L488">        	JsonObject newEntry = convertMapToJson(requestInfo.getEntry().get(RallyConstants.CREATE));</span>
+<span class="nc" id="L489">        	CreateRequest createRequest = new CreateRequest(requestInfo.getRequestType(), newEntry);</span>
+<span class="nc" id="L490">	        CreateResponse createResponse = null;	        </span>
+	        
+			try {
+<span class="nc" id="L493">				createResponse = restApi.create(createRequest);				</span>
+			
+<span class="nc" id="L495">			} catch (IOException e) {</span>
+<span class="nc" id="L496">				log.error(&quot;failed to create new entry, message : &quot; + e.toString() + &quot;RallyInfo -&quot; + rallyInfo);</span>
+<span class="nc" id="L497">	        	throw new DefectException(&quot;failed to create new entry, message : &quot; + e.toString());</span>
+			}
+			
+<span class="nc bnc" id="L500" title="All 2 branches missed.">             if (createResponse.wasSuccessful()) {</span>
+                 //Read defect
+<span class="nc" id="L502">                 String ref = Ref.getRelativeRef(createResponse.getObject().get(&quot;_ref&quot;).getAsString());</span>
+<span class="nc" id="L503">                 String imageFilePath = &quot;/Users/sonamdeo/Desktop/&quot;;</span>
+<span class="nc" id="L504">                 String imageFileName = &quot;sample1.png&quot;;</span>
+<span class="nc" id="L505">                 String fullImageFile = imageFilePath + imageFileName;</span>
+                 String imageBase64String;
+                 long attachmentSize;
+                
+                 // Open file
+                 RandomAccessFile myImageFileHandle;
+					try {
+<span class="nc" id="L512">						myImageFileHandle = new RandomAccessFile(fullImageFile, &quot;r&quot;);</span>
+<span class="nc" id="L513">                     long longLength = myImageFileHandle.length();</span>
+<span class="nc" id="L514">                     long maxLength = 5000000;</span>
+<span class="nc bnc" id="L515" title="All 2 branches missed.">                     if (longLength &gt;= maxLength) throw new IOException(&quot;File size &gt;= 5 MB Upper limit for Rally.&quot;);</span>
+<span class="nc" id="L516">                     int fileLength = (int) longLength;            </span>
+
+                     // Read file and return data
+<span class="nc" id="L519">                     byte[] fileBytes = new byte[fileLength];</span>
+<span class="nc" id="L520">                     myImageFileHandle.readFully(fileBytes);</span>
+<span class="nc" id="L521">                     imageBase64String = Base64.encodeBase64String(fileBytes);</span>
+<span class="nc" id="L522">                     attachmentSize = fileLength;</span>
+                     
+<span class="nc" id="L524">                    String workspaceRef = &quot;/&quot; + RallyConstants.WORKSPACE + &quot;/&quot; + TestBedManager.INSTANCE.getDefectConfig().getWorkspaceId();</span>
+     
+                     // First create AttachmentContent from image string
+<span class="nc" id="L527">                     JsonObject myAttachmentContent = new JsonObject();</span>
+                  
+<span class="nc" id="L529">                     myAttachmentContent.addProperty(&quot;Workspace&quot;, workspaceRef);</span>
+                     
+<span class="nc" id="L531">                     myAttachmentContent.addProperty(&quot;Content&quot;, imageBase64String);</span>
+<span class="nc" id="L532">                     CreateRequest attachmentContentCreateRequest = new CreateRequest(&quot;AttachmentContent&quot;, myAttachmentContent);</span>
+<span class="nc" id="L533">                     CreateResponse attachmentContentResponse = restApi.create(attachmentContentCreateRequest);</span>
+<span class="nc" id="L534">                     String myAttachmentContentRef = attachmentContentResponse.getObject().get(&quot;_ref&quot;).getAsString();</span>
+     
+                     //Create the Attachment
+<span class="nc" id="L537">                     JsonObject myAttachment = new JsonObject();</span>
+<span class="nc" id="L538">                     myAttachment.addProperty(&quot;Artifact&quot;, ref);</span>
+<span class="nc" id="L539">                     myAttachment.addProperty(&quot;Content&quot;, myAttachmentContentRef);</span>
+<span class="nc" id="L540">                     myAttachment.addProperty(&quot;Workspace&quot;, workspaceRef);</span>
+<span class="nc" id="L541">                     myAttachment.addProperty(&quot;Name&quot;, RallyConstants.NAME);</span>
+<span class="nc" id="L542">                     myAttachment.addProperty(&quot;Description&quot;, RallyConstants.DESCRIPTION);</span>
+<span class="nc" id="L543">                     myAttachment.addProperty(&quot;ContentType&quot;,RallyConstants.CONTENTTYPE);</span>
+<span class="nc" id="L544">                     myAttachment.addProperty(&quot;Size&quot;, attachmentSize);</span>
+                     // myAttachment.addProperty(&quot;User&quot;, userRef);         
+
+<span class="nc" id="L547">                      CreateRequest attachmentCreateRequest = new CreateRequest(&quot;Attachment&quot;, myAttachment);</span>
+<span class="nc" id="L548">                      CreateResponse attachmentResponse = restApi.create(attachmentCreateRequest);</span>
+                     
+<span class="nc" id="L550">                      String myAttachmentRef = attachmentResponse.getObject().get(&quot;_ref&quot;).getAsString();</span>
+
+<span class="nc bnc" id="L552" title="All 2 branches missed.">                      if (attachmentResponse.wasSuccessful()) {</span>
+<span class="nc" id="L553">                    	  log.info(&quot;Successfully created Attachment&quot;);</span>
+                         
+<span class="nc" id="L555">                      } else {</span>
+                         String[] attachmentContentErrors;
+<span class="nc" id="L557">                         attachmentContentErrors = attachmentResponse.getErrors();</span>
+<span class="nc" id="L558">                         System.out.println(&quot;Error occurred creating Attachment: &quot;);</span>
+<span class="nc bnc" id="L559" title="All 2 branches missed.">                         for (int j=0; j&lt;attachmentContentErrors.length;j++) {</span>
+<span class="nc" id="L560">                             System.out.println(attachmentContentErrors[j]);</span>
+                         }
+                      }
+                
+<span class="nc" id="L564">                 }catch (FileNotFoundException e1) {</span>
+						// TODO Auto-generated catch block
+<span class="nc" id="L566">						e1.printStackTrace();</span>
+					}
+<span class="nc" id="L568">					catch (Exception e) {</span>
+<span class="nc" id="L569">                     System.out.println(&quot;Exception occurred while attempting to create Content and/or Attachment: &quot;);</span>
+<span class="nc" id="L570">                     e.printStackTrace();            </span>
+                 }
+					
+
+<span class="nc" id="L574">             } else {</span>
+                 String[] createErrors;
+<span class="nc" id="L576">                 createErrors = createResponse.getErrors();</span>
+<span class="nc" id="L577">                 System.out.println(&quot;Error occurred creating a defect: &quot;);</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">                 for (int j=0; j&lt;createErrors.length;j++) {</span>
+<span class="nc" id="L579">                     System.out.println(createErrors[j]);</span>
+                 }
+             } 
+             
+<span class="nc" id="L583">             } finally {</span>
+         	
+         	 try {
+<span class="nc" id="L586">					restApi.close();</span>
+<span class="nc" id="L587">				} catch (IOException e) {</span>
+					// TODO Auto-generated catch block
+<span class="nc" id="L589">					e.printStackTrace();</span>
+				}
+<span class="nc" id="L591">         	 }     </span>
+<span class="nc" id="L592">}</span>
+ 	 
+
+		/**
+		 * Updates TestCase results based on test runs of the test cases 
+		 * @param  defName,testcaseId, workspaceId,projId,
+		 * 		   DefSeverity, DefOwner,DefNotes,storyId
+		 * @throws DefectException
+		 * @throws IOException 
+		 *
+		 */
+	 //added by sonam
+	 
+	 public void updateTestCaseResult(String defName, String testcaseId,String workspaceId,
+				String projId, String DefSeverity, String DefOwner,
+				String DefNotes, String storyId) {
+
+<span class="nc" id="L609">			log.info(&quot;Start - create&quot;);</span>
+			
+		try {
+<span class="nc" id="L612">				createInstance();</span>
+<span class="nc" id="L613">				String workspaceRef = &quot;/&quot; + RallyConstants.WORKSPACE + &quot;/&quot; + workspaceId;</span>
+<span class="nc" id="L614">			    String projectRef = &quot;/&quot; + RallyConstants.WORKSPACE + &quot;/&quot; + projId;    </span>
+    //Read User
+<span class="nc" id="L616">    QueryRequest userRequest = new QueryRequest(&quot;User&quot;);</span>
+<span class="nc" id="L617">    userRequest.setFetch(new Fetch(&quot;UserName&quot;, &quot;Subscription&quot;, &quot;DisplayName&quot;, &quot;SubscriptionAdmin&quot;));</span>
+<span class="nc" id="L618">    userRequest.setQueryFilter(new QueryFilter(&quot;UserName&quot;, &quot;=&quot;, rallyInfo.getUserName()));</span>
+    
+<span class="nc" id="L620">    QueryResponse userQueryResponse = restApi.query(userRequest);</span>
+<span class="nc" id="L621">    JsonArray userQueryResults = userQueryResponse.getResults();</span>
+<span class="nc" id="L622">    JsonElement userQueryElement = userQueryResults.get(0);</span>
+<span class="nc" id="L623">    JsonObject userQueryObject = userQueryElement.getAsJsonObject();</span>
+<span class="nc" id="L624">    String userRef = userQueryObject.get(&quot;_ref&quot;).getAsString();</span>
+	            
+    //to get tescase formatted ID 
+<span class="nc" id="L627">    QueryRequest request = new QueryRequest(&quot;TestCase&quot;);</span>
+<span class="nc" id="L628">    request.setWorkspace(workspaceRef);</span>
+<span class="nc" id="L629">    request.setFetch(new Fetch(&quot;FormattedID&quot;));</span>
+<span class="nc" id="L630">    request.setQueryFilter(new QueryFilter(&quot;ObjectID&quot;, &quot;=&quot;, testcaseId)); </span>
+<span class="nc" id="L631">    QueryResponse response = restApi.query(request);</span>
+<span class="nc" id="L632">    String testcaseform = &quot;&quot;;</span>
+<span class="nc bnc" id="L633" title="All 2 branches missed.">       for (int j=0; j&lt;response.getTotalResultCount();j++){</span>
+<span class="nc" id="L634">            JsonObject jsonObject = response.getResults().get(j).getAsJsonObject();</span>
+<span class="nc" id="L635">            JsonElement FormattedTestcaseId = jsonObject.get(&quot;FormattedID&quot;);   </span>
+<span class="nc" id="L636">            testcaseform = FormattedTestcaseId.getAsString();              </span>
+      }
+    
+    // Query for Test Case to which we want to add results
+<span class="nc" id="L640">    QueryRequest testCaseRequest = new QueryRequest(&quot;TestCase&quot;);</span>
+<span class="nc" id="L641">    testCaseRequest.setFetch(new Fetch(&quot;FormattedID&quot;,&quot;Name&quot;));</span>
+<span class="nc" id="L642">    testCaseRequest.setWorkspace(workspaceRef);</span>
+<span class="nc" id="L643">    testCaseRequest.setQueryFilter(new QueryFilter(&quot;FormattedID&quot;, &quot;=&quot;,testcaseform));</span>
+    
+<span class="nc" id="L645">    QueryResponse testCaseQueryResponse = restApi.query(testCaseRequest);</span>
+<span class="nc" id="L646">    JsonObject testCaseJsonObject = testCaseQueryResponse.getResults().get(0).getAsJsonObject();</span>
+<span class="nc" id="L647">    String testCaseRef = testCaseQueryResponse.getResults().get(0).getAsJsonObject().get(&quot;_ref&quot;).getAsString(); </span>
+  
+<span class="nc bnc" id="L649" title="All 2 branches missed.">    for (int i=0; i&lt;1; i++) {</span>
+    	
+	    //Add a Test Case Result    
+<span class="nc" id="L652">    	log.info(&quot;Creating Test Case Result..&quot;);</span>
+<span class="nc" id="L653">	    JsonObject newTestCaseResult = new JsonObject();</span>
+<span class="nc" id="L654">	    newTestCaseResult.addProperty(&quot;Verdict&quot;, RallyConstants.VERDICT);</span>
+<span class="nc" id="L655">	    newTestCaseResult.addProperty(&quot;Date&quot;,DateUtil.getCurrentDateTime(RallyConstants.CREATION_DATE_FORMAT));</span>
+<span class="nc" id="L656">	    newTestCaseResult.addProperty(&quot;Notes&quot;, DefNotes);</span>
+<span class="nc" id="L657">	    newTestCaseResult.addProperty(&quot;Build&quot;, TestBedManager.INSTANCE.getDefectConfig().getBuild());</span>
+<span class="nc" id="L658">	    newTestCaseResult.addProperty(&quot;Tester&quot;, userRef);</span>
+<span class="nc" id="L659">	    newTestCaseResult.addProperty(&quot;TestCase&quot;, testCaseRef);</span>
+<span class="nc" id="L660">	    newTestCaseResult.addProperty(&quot;Workspace&quot;, workspaceRef);</span>
+
+<span class="nc" id="L662">	    CreateRequest createRequest = new CreateRequest(&quot;testcaseresult&quot;, newTestCaseResult);</span>
+<span class="nc" id="L663">	    CreateResponse createResponse = restApi.create(createRequest);  </span>
+<span class="nc bnc" id="L664" title="All 2 branches missed.">	    if (createResponse.wasSuccessful()) {</span>
+
+	        //Read Test Case
+<span class="nc" id="L667">	        String ref = Ref.getRelativeRef(createResponse.getObject().get(&quot;_ref&quot;).getAsString());</span>
+<span class="nc" id="L668">	        GetRequest getRequest = new GetRequest(ref);</span>
+<span class="nc" id="L669">	        getRequest.setFetch(new Fetch(&quot;Date&quot;, &quot;Verdict&quot;));</span>
+<span class="nc" id="L670">	        GetResponse getResponse = restApi.get(getRequest);</span>
+<span class="nc" id="L671">	        JsonObject obj = getResponse.getObject();</span>
+<span class="nc" id="L672">	        System.out.println(String.format(&quot;my Read Test Case Result. Date = %s, Verdict = %s&quot;,</span>
+<span class="nc" id="L673">	                obj.get(&quot;Date&quot;).getAsString(), obj.get(&quot;Verdict&quot;).getAsString()));                 </span>
+<span class="nc" id="L674">	    } else {</span>
+	        String[] createErrors;
+<span class="nc" id="L676">	        createErrors = createResponse.getErrors();</span>
+<span class="nc" id="L677">	        System.out.println(&quot;Error occurred creating Test Case Result: &quot;);</span>
+<span class="nc bnc" id="L678" title="All 2 branches missed.">	        for (int k=0; i&lt;createErrors.length;k++) {</span>
+<span class="nc" id="L679">	            System.out.println(createErrors[k]);</span>
+	        }
+	    }
+    }
+       
+<span class="nc" id="L684">    } catch (DefectException e) {</span>
+		// TODO Auto-generated catch block
+<span class="nc" id="L686">		e.printStackTrace();</span>
+<span class="nc" id="L687">	} catch (IOException e) {</span>
+		// TODO Auto-generated catch block
+<span class="nc" id="L689">		e.printStackTrace();</span>
+<span class="nc" id="L690">	} finally {</span>
+        //Release all resources
+        try {
+<span class="nc" id="L693">			restApi.close();</span>
+<span class="nc" id="L694">		} catch (IOException e) {</span>
+			// TODO Auto-generated catch block
+<span class="nc" id="L696">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L698">    }   </span>
+
+<span class="nc" id="L700">} </span>
+
+	/**
+	 * Updates test case or defect.
+	 * @param requestInfo
+	 * @throws DefectException
+	 */
+	private void update(RequestInfo requestInfo) throws DefectException {
+<span class="nc" id="L708">		log.info(&quot;Start - update&quot;);</span>
+<span class="nc" id="L709">		createInstance();</span>
+<span class="nc bnc" id="L710" title="All 2 branches missed.">		if(CommonUtil.isNull(requestInfo)){</span>
+<span class="nc" id="L711">			log.error(&quot;Request Info is null - &quot;+ requestInfo);			</span>
+<span class="nc" id="L712">			throw new DefectException(&quot;failed to update, request information is missing&quot;);</span>
+		}
+        try{
+
+<span class="nc" id="L716">        	String ref = requestInfo.getRefField();</span>
+
+        	//Update
+<span class="nc" id="L719">        	JsonObject updateEntry = convertMapToJson(requestInfo.getEntry().get(RallyConstants.UPDATE));	        </span>
+<span class="nc" id="L720">        	UpdateRequest updateRequest = new UpdateRequest(ref, updateEntry);</span>
+<span class="nc" id="L721">        	UpdateResponse updateResponse = null;</span>
+
+        	try {
+<span class="nc" id="L724">   	   			updateResponse = restApi.update(updateRequest);</span>
+<span class="nc" id="L725">			} catch (IOException e) {</span>
+<span class="nc" id="L726">				log.error(&quot;failed to update, message : &quot; + e.toString() + &quot;RequestInfo -&quot; + requestInfo);</span>
+<span class="nc" id="L727">	        	throw new DefectException(&quot;failed to update, message : &quot; + e.toString());</span>
+			}
+
+<span class="nc bnc" id="L730" title="All 2 branches missed.">            if (updateResponse.wasSuccessful()) {</span>
+<span class="nc" id="L731">            	log.info(String.format(&quot;Updated %s&quot;, updateResponse.getObject().get(RallyConstants._REF).getAsString()));          </span>
+<span class="nc" id="L732">            } else {</span>
+<span class="nc" id="L733">                List&lt;String&gt; lstResult = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L734" title="All 2 branches missed.">                for (String err : updateResponse.getErrors()) {</span>
+<span class="nc" id="L735">                    System.err.println(&quot;\t&quot; + err);</span>
+<span class="nc" id="L736">                    lstResult.add(err);</span>
+                }
+<span class="nc" id="L738">                log.error(&quot;Error in updating : &quot; + lstResult);</span>
+<span class="nc" id="L739">                throw new DefectException(&quot;Error in updating : &quot; + lstResult);</span>
+            }
+<span class="nc" id="L741">        } finally {</span>
+<span class="nc" id="L742">        	closeDefect();</span>
+<span class="nc" id="L743">        	log.info(&quot;End - update&quot;);</span>
+<span class="nc" id="L744">        }</span>
+<span class="nc" id="L745">   	}</span>
+
+   	/**
+   	 * Delete Test case or Defect.
+   	 * TODO: create a wrapper method 'deleteDefectBuilder' for this method
+   	 * @param requestInfo
+   	 * @throws DefectException
+   	 */
+   	private void delete(RequestInfo requestInfo) throws DefectException {
+<span class="nc" id="L754">		log.info(&quot;Start - delete&quot;);</span>
+<span class="nc" id="L755">		createInstance();</span>
+<span class="nc bnc" id="L756" title="All 2 branches missed.">		if(CommonUtil.isNull(requestInfo)){</span>
+<span class="nc" id="L757">			log.error(&quot;Request Info is null - &quot;+ requestInfo);			</span>
+<span class="nc" id="L758">			throw new DefectException(&quot;failed to create, request information is missing&quot;);</span>
+		}
+        try{
+
+        	
+<span class="nc" id="L763">        	String ref = getReference(requestInfo);</span>
+        
+        	
+        	//Delete
+<span class="nc" id="L767">            DeleteRequest deleteRequest = new DeleteRequest(ref);</span>
+<span class="nc" id="L768">            DeleteResponse deleteResponse = null;</span>
+
+        	try {
+<span class="nc" id="L771">        		deleteResponse = restApi.delete(deleteRequest);</span>
+<span class="nc" id="L772">			} catch (IOException e) {</span>
+<span class="nc" id="L773">				log.error(&quot;failed to delete, message : &quot; + e.toString() + &quot;RequestInfo -&quot; + requestInfo);</span>
+<span class="nc" id="L774">	        	throw new DefectException(&quot;failed to delete, message : &quot; + e.toString());</span>
+			}
+
+<span class="nc bnc" id="L777" title="All 2 branches missed.">            if (deleteResponse.wasSuccessful()) {</span>
+<span class="nc" id="L778">            	log.info(&quot;Deleted&quot;);          </span>
+<span class="nc" id="L779">            } else {</span>
+            	
+<span class="nc" id="L781">                log.error(&quot;Error in update : &quot;);</span>
+<span class="nc" id="L782">                List&lt;String&gt; lstResult = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L783" title="All 2 branches missed.">                for (String err : deleteResponse.getErrors()) {</span>
+<span class="nc" id="L784">                    System.err.println(&quot;\t&quot; + err);</span>
+<span class="nc" id="L785">                    lstResult.add(err);</span>
+                }
+<span class="nc" id="L787">                log.error(&quot;Error in deleting : &quot; + lstResult);</span>
+<span class="nc" id="L788">                throw new DefectException(&quot;Error in deleting&quot; + lstResult);</span>
+            }
+<span class="nc" id="L790">        } finally {</span>
+<span class="nc" id="L791">        	closeDefect();</span>
+<span class="nc" id="L792">        	log.info(&quot;End - delete&quot;);</span>
+<span class="nc" id="L793">        }</span>
+<span class="nc" id="L794">   	}</span>
+
+   	/**
+   	 * Returns reference of user, workspace , project, tags
+   	 * @param rallyInfo Rally integration related information is stored.
+   	 * @return reference of user, workspace , project, tags 
+   	 */
+   	private String getReference(RequestInfo requestInfo) throws DefectException { 
+<span class="nc" id="L802">		log.info(&quot;Start - getReference&quot;);</span>
+<span class="nc bnc" id="L803" title="All 2 branches missed.">		if(CommonUtil.isNull(requestInfo)){</span>
+<span class="nc" id="L804">			log.error(&quot;Request Info is null - &quot;+ requestInfo);			</span>
+<span class="nc" id="L805">			throw new DefectException(&quot;failed to read, request information is missing&quot;);</span>
+		}
+<span class="nc bnc" id="L807" title="All 2 branches missed.">		if(CommonUtil.isNull(restApi))</span>
+<span class="nc" id="L808">			createInstance();</span>
+		
+<span class="nc" id="L810">		String ref = null;</span>
+        try {
+
+<span class="nc" id="L813">            log.info(&quot;Getting Query Response&quot;);</span>
+            
+<span class="nc" id="L815">            QueryResponse qryResponse = getQueryResponse(requestInfo);</span>
+            
+<span class="nc" id="L817">            log.info(&quot;Got Query Response : &quot; + qryResponse);</span>
+            
+<span class="nc" id="L819">            JsonArray qryResults = qryResponse.getResults();</span>
+<span class="nc" id="L820">            JsonElement qryElement = qryResults.get(0);</span>
+<span class="nc" id="L821">            JsonObject qryObject = qryElement.getAsJsonObject();</span>
+<span class="nc bnc" id="L822" title="All 2 branches missed.">            ref = qryObject.get((requestInfo.getRefField() != null)?requestInfo.getRefField():RallyConstants._REF).toString();</span>
+
+<span class="nc" id="L824">        } finally {</span>
+<span class="nc" id="L825">        	closeDefect();</span>
+<span class="nc" id="L826">    		log.info(&quot;End - getReference&quot;);</span>
+<span class="nc" id="L827">    		 System.out.println(&quot;value of ref is&quot;+ ref);</span>
+<span class="nc" id="L828">        }</span>
+      
+<span class="nc" id="L830">		return ref;</span>
+   	}
+   	
+   	/**
+   	 * Returns query response based on query request.
+   	 * @param qryRequestInfo Query Request information is stored.
+   	 * @return query response 
+   	 */
+	private QueryResponse getQueryResponse(RequestInfo qryRequestInfo) throws DefectException{
+		
+<span class="nc bnc" id="L840" title="All 2 branches missed.">		if(CommonUtil.isNull(qryRequestInfo)){</span>
+<span class="nc" id="L841">			log.error(&quot;failed to make query request, Query Request Info-&quot; + qryRequestInfo);</span>
+<span class="nc" id="L842">        	throw new DefectException(&quot;failed to make query request, required query request info is missing&quot;);</span>
+		}
+		
+		// Request type can be User,defect etc.
+<span class="nc" id="L846">		QueryRequest qryRequest = new QueryRequest(qryRequestInfo.getRequestType());</span>
+		
+<span class="nc" id="L848">		log.info(&quot;Request Type : &quot; + qryRequestInfo.getRequestType());</span>
+		
+<span class="nc" id="L850">		qryRequest.setFetch(new Fetch(qryRequestInfo.getFetch()));</span>
+		try{
+<span class="nc bnc" id="L852" title="All 2 branches missed.">			if(qryRequestInfo.getQueryFilter() != null){</span>
+<span class="nc" id="L853">				QueryFilter qfilter = null;</span>
+<span class="nc" id="L854">				ArrayList&lt;String&gt; filterList = qryRequestInfo.getQueryFilter();</span>
+<span class="nc bnc" id="L855" title="All 4 branches missed.">				if(!filterList.isEmpty() &amp;&amp; filterList.size() &gt;= 3){</span>
+<span class="nc bnc" id="L856" title="All 4 branches missed.">					if((filterList.get(2)==null)||(filterList.get(2).length() ==0)){</span>
+<span class="nc" id="L857">						filterList.set(2,&quot;null&quot;);</span>
+					}
+<span class="nc" id="L859">					qfilter = new QueryFilter(filterList.get(0), filterList.get(1), filterList.get(2));</span>
+<span class="nc bnc" id="L860" title="All 2 branches missed.">					for(int i=3;i+3&lt;filterList.size();i=i+4){</span>
+<span class="nc bnc" id="L861" title="All 2 branches missed.">						if(filterList.get(i) == &quot;AND&quot;){</span>
+<span class="nc" id="L862">							qfilter = QueryFilter.and(qfilter, new QueryFilter(filterList.get(i + 1), filterList.get(i + 2), filterList.get(i + 3)));</span>
+<span class="nc bnc" id="L863" title="All 2 branches missed.">						}else if(filterList.get(i) == &quot;OR&quot;){</span>
+<span class="nc" id="L864">							qfilter = QueryFilter.or(qfilter, new QueryFilter(filterList.get(i + 1), filterList.get(i + 2), filterList.get(i + 3)));</span>
+<span class="nc" id="L865">						}else{</span>
+<span class="nc" id="L866">							throw new DefectException(&quot;Invalid query filter string.&quot;);</span>
+						}
+					}
+				}
+<span class="nc" id="L870">				qryRequest.setQueryFilter(qfilter);</span>
+			}
+<span class="nc" id="L872">		}catch(IndexOutOfBoundsException e){</span>
+<span class="nc" id="L873">			log.error(e.getMessage());</span>
+<span class="nc" id="L874">		}catch(NullPointerException e){</span>
+<span class="nc" id="L875">			log.error(e.getMessage());</span>
+		}
+<span class="nc bnc" id="L877" title="All 2 branches missed.">		if(qryRequestInfo.getQueryOrder() != null){</span>
+<span class="nc" id="L878">			qryRequest.setOrder(convertMapToString(qryRequestInfo.getQueryOrder()));</span>
+		}
+	
+<span class="nc bnc" id="L881" title="All 2 branches missed.">		if(qryRequestInfo.getPageSize() != -1)</span>
+<span class="nc" id="L882">			qryRequest.setPageSize(qryRequestInfo.getPageSize());</span>
+			
+<span class="nc bnc" id="L884" title="All 2 branches missed.">		if(qryRequestInfo.getLimit() != -1)			</span>
+<span class="nc" id="L885">			qryRequest.setPageSize(qryRequestInfo.getLimit());</span>
+		
+<span class="nc" id="L887">		QueryResponse qryResponse = null;</span>
+		try {
+<span class="nc" id="L889">			qryResponse = restApi.query(qryRequest);</span>
+<span class="nc" id="L890">		} catch (IOException e) {</span>
+<span class="nc" id="L891">			log.error(&quot;failed to query , message : &quot; + e.toString() + &quot; Query Response -&quot; + qryResponse);</span>
+<span class="nc" id="L892">        	throw new DefectException(&quot;failed to query , message : &quot; + e.toString());</span>
+		}
+		
+<span class="nc" id="L895">		return qryResponse;</span>
+	}	      	
+
+   	
+	/**
+	 * Connect to rally instance.
+	 * @throws DefectException
+	 */
+	private void createInstance() throws DefectException{
+		try {
+			
+<span class="nc" id="L906">			String username = TestBedManager.INSTANCE.getDefectConfig().getUsername();</span>
+			
+<span class="nc" id="L908">			String password = encrypt_decrypt.getDecodedValue(TestBedManager.INSTANCE.getDefectConfig().getPassword());</span>
+			
+			//restApi = new RallyRestApi(new URI(rallyInfo.getUrl()), rallyInfo.getUserName(), rallyInfo.getPassword());
+<span class="nc" id="L911">			restApi = new RallyRestApi(new URI(rallyInfo.getUrl()),username ,password);</span>
+<span class="nc" id="L912">		} catch (URISyntaxException e) {</span>
+<span class="nc" id="L913">			log.error(&quot;failed to connect to rally instance, message : &quot; + e.toString() + &quot;RallyInfo -&quot; + rallyInfo);</span>
+<span class="nc" id="L914">			throw new DefectException(&quot;failed to connect to rally instance, message : &quot; + e.toString());        	</span>
+		}
+<span class="nc bnc" id="L916" title="All 2 branches missed.">		if(rallyInfo.getWsapiVersion() != null)</span>
+<span class="nc" id="L917">			restApi.setWsapiVersion(rallyInfo.getWsapiVersion());</span>
+<span class="nc" id="L918">		restApi.setApplicationName(rallyInfo.getAppName());</span>
+		
+<span class="nc" id="L920">	}</span>
+	
+	private JsonObject convertMapToJson(Map&lt;String,String&gt; entry){
+<span class="nc" id="L923">		JsonObject jsonObj = new JsonObject();</span>
+<span class="nc" id="L924">		Set&lt;String&gt; keySet = entry.keySet();</span>
+		
+<span class="nc bnc" id="L926" title="All 2 branches missed.">		for(String key : keySet){</span>
+<span class="nc" id="L927">			jsonObj.addProperty(key, entry.get(key));</span>
+		}
+<span class="nc" id="L929">		return jsonObj;</span>
+	}
+	
+	private String convertMapToString(Map&lt;String,String&gt; map){
+<span class="nc" id="L933">		String str = &quot;&quot;;</span>
+<span class="nc" id="L934">		Set&lt;String&gt; keySet = map.keySet();</span>
+<span class="nc" id="L935">		int count = 1;</span>
+<span class="nc bnc" id="L936" title="All 2 branches missed.">		for(String key : keySet){</span>
+<span class="nc" id="L937">			str = str + key + &quot; &quot; + map.get(key);</span>
+<span class="nc bnc" id="L938" title="All 2 branches missed.">			if(keySet.size() != count)</span>
+<span class="nc" id="L939">				str = str + &quot;,&quot;;</span>
+<span class="nc" id="L940">			count++;</span>
+		}
+<span class="nc" id="L942">		return str;</span>
+	}
+
+	public void createAJiraDefectBuilder(String url, String issueUrl,
+			String username, String password, String keys) {
+		// TODO Auto-generated method stub
+		
+<span class="nc" id="L949">	}</span>
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

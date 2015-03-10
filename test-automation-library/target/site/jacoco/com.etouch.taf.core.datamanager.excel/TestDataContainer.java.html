@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TestDataContainer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Automation Library</a> &gt; <a href="index.source.html" class="el_package">com.etouch.taf.core.datamanager.excel</a> &gt; <span class="el_source">TestDataContainer.java</span></div><h1>TestDataContainer.java</h1><pre class="source lang-java linenums">package com.etouch.taf.core.datamanager.excel;
+
+import java.io.File;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.logging.Log;
+import org.testng.annotations.DataProvider;
+
+import com.etouch.taf.core.exception.TafDataProviderException;
+import com.etouch.taf.util.LogUtil;
+
+/**
+ * 
+ * Container to store:
+ * 
+ * 1. The test data in format Object[][] with {@link TestDataKey} as the key to access the test data. Any TestNG
+ * {@link DataProvider} implementation that reads data is expected to store the
+ * data here for sharing with other test methods requiring the same data.
+ * 
+ * 2. The data files in a map - &lt;file_key, absolute_path_to_fil&gt;
+ * 
+ * @author eTouch Systems Corporation
+ * @version 1.0
+ * 
+ */
+public class TestDataContainer {
+	
+<span class="nc" id="L29">	private static Log log = LogUtil.getLog(TestDataContainer.class);</span>
+	
+<span class="nc" id="L31">	private static TestDataContainer s_instance = null;</span>
+	
+<span class="nc" id="L33">	private Map&lt;String, String&gt; dataFilesInfo = new ConcurrentHashMap&lt;String, String&gt;();</span>
+	
+<span class="nc" id="L35">	private Map&lt;TestDataKey, Object[][]&gt; tafTestData = new ConcurrentHashMap&lt;TestDataKey, Object[][]&gt;();</span>
+	
+	/**
+	 * Empty, no-parameter private constructor for creating singleton
+	 */
+<span class="nc" id="L40">	private TestDataContainer(){</span>
+<span class="nc" id="L41">	}</span>
+	
+	/**
+	 * Returns the singleton instance of this class
+	 * 
+	 * @return
+	 */
+	public static TestDataContainer getInstance(){
+<span class="nc bnc" id="L49" title="All 2 branches missed.">		if(s_instance!=null){</span>
+<span class="nc" id="L50">			return s_instance;</span>
+		}
+		
+<span class="nc bnc" id="L53" title="All 2 branches missed.">		if(s_instance==null){</span>
+<span class="nc" id="L54">			synchronized (TestDataContainer.class) {</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">				if(s_instance==null){</span>
+<span class="nc" id="L56">					s_instance = new TestDataContainer();</span>
+				}
+			}
+		}
+		
+<span class="nc" id="L61">		return s_instance;</span>
+	}
+	
+	/**
+	 * Adds the test data object 2d array [][] with specified {@link TestDataKey} as key to the underlying map.
+	 * 
+	 * @param testDataKey
+	 * @param testData
+	 * @return
+	 */
+	public boolean addTestData(TestDataKey testDataKey, Object[][] testData){
+<span class="nc bnc" id="L72" title="All 2 branches missed.">		return tafTestData.put(testDataKey, testData)!=null;</span>
+	}
+	
+	/**
+	 * Gets the test data object 
+	 * 
+	 * @param testDataKey
+	 * @return
+	 */
+	public Object[][] getTestData(TestDataKey testDataKey){
+<span class="nc" id="L82">		return tafTestData.get(testDataKey);</span>
+	}
+	
+	/**
+	 * Checks if the container already has the test data loaded
+	 * 
+	 * @param testDataKey
+	 * @return
+	 */
+	public boolean hasTestData(TestDataKey testDataKey){
+<span class="nc" id="L92">		return tafTestData.containsKey(testDataKey);</span>
+	}
+	
+	/**
+	 * 
+	 * @param fileKey
+	 * @param filePath
+	 * @return
+	 * @throws TafDataProviderException 
+	 */
+	public boolean addDataFile(String fileKey, String filePath) throws TafDataProviderException{
+<span class="nc bnc" id="L103" title="All 4 branches missed.">		if(null == fileKey || null == filePath){</span>
+<span class="nc" id="L104">			return false;</span>
+		}
+		
+		// Create a file
+<span class="nc" id="L108">		File dataFile = new File(filePath);</span>
+		
+		// Check if it exists and the current user process can read
+<span class="nc bnc" id="L111" title="All 4 branches missed.">		if(!dataFile.exists() &amp;&amp; !dataFile.canRead()){</span>
+<span class="nc" id="L112">			throw new TafDataProviderException(&quot;Data File with Key=&quot; + fileKey + &quot; File Path = &quot; + filePath + &quot; does not exist&quot;);</span>
+		}
+		
+		// add it to the map
+<span class="nc bnc" id="L116" title="All 2 branches missed.">		return dataFilesInfo.put(fileKey, dataFile.getAbsolutePath())!=null;</span>
+	}
+	
+	/**
+	 * 
+	 * @param fileKey
+	 * @return
+	 */
+	public String getDataFile(String fileKey){
+<span class="nc" id="L125">		return dataFilesInfo.get(fileKey);</span>
+	}
+	
+	/**
+	 * 
+	 * @param fileKey
+	 * @return
+	 */
+	public boolean hasDataFile(String fileKey){
+<span class="nc" id="L134">		return dataFilesInfo.containsKey(fileKey);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

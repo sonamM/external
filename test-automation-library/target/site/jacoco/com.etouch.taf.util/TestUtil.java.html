@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TestUtil.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Automation Library</a> &gt; <a href="index.source.html" class="el_package">com.etouch.taf.util</a> &gt; <span class="el_source">TestUtil.java</span></div><h1>TestUtil.java</h1><pre class="source lang-java linenums">/*
+ * 
+ */
+package com.etouch.taf.util;
+
+import com.etouch.taf.core.datamanager.excel.Xlsx_Reader;
+
+// TODO: Auto-generated Javadoc
+/**
+ * The Class TestUtil.
+ */
+<span class="nc" id="L12">public class TestUtil {</span>
+
+	/**
+	 * The main method.
+	 *
+	 * @param args the arguments
+	 */
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+<span class="nc" id="L22">	}</span>
+	
+//find if the Test Suite is runnable based on the run mode
+		/**
+ * Checks if is suite runnable.
+ *
+ * @param xls the xls
+ * @param suiteName the suite name
+ * @return true, if is suite runnable
+ */
+public static boolean isSuiteRunnable(Xlsx_Reader xls, String suiteName){
+<span class="nc" id="L33">			System.out.println(&quot;Xls name:&quot;+xls+&quot;, Suite name:&quot;+suiteName);</span>
+<span class="nc" id="L34">			boolean isExecutable =false;</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">			for(int  i = 2; i&lt;=xls.getRowCount(&quot;Test Suite&quot;); i++){</span>
+<span class="nc" id="L36">				String tsid = xls.getCellData(&quot;Test Suite&quot;, &quot;TSID&quot;, i);</span>
+<span class="nc" id="L37">				String runmode = xls.getCellData(&quot;Test Suite&quot;, &quot;Runmode&quot;, i);</span>
+<span class="nc" id="L38">				System.out.println(tsid + &quot; Runmode is &quot; + runmode);</span>
+				
+<span class="nc bnc" id="L40" title="All 2 branches missed.">				if(tsid.equalsIgnoreCase(suiteName)){</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">					if(runmode.equalsIgnoreCase(&quot;Y&quot;)){</span>
+<span class="nc" id="L42">						isExecutable = true;</span>
+<span class="nc" id="L43">					}</span>
+						else{
+<span class="nc" id="L45">							isExecutable = false;</span>
+							}
+					}
+				}
+<span class="nc" id="L49">		xls = null;</span>
+<span class="nc" id="L50">		return isExecutable;</span>
+		}
+	
+		
+		
+//Find if the specified test is runnable based on runmode
+		/**
+ * Checks if is test runnable.
+ *
+ * @param xls the xls
+ * @param testCaseName the test case name
+ * @return true, if is test runnable
+ */
+public static boolean isTestRunnable(Xlsx_Reader xls, String testCaseName){
+<span class="nc" id="L64">			boolean isExecutable = false;</span>
+			
+<span class="nc" id="L66">			System.out.println(&quot;Sheet name:&quot;+xls+&quot;, Test case name:&quot;+testCaseName);</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">			for(int i =2; i&lt;=xls.getRowCount(&quot;Test Cases&quot;); i++){</span>
+<span class="nc" id="L68">				String tcid = xls.getCellData(&quot;Test Cases&quot;, &quot;TCID&quot;, i);</span>
+<span class="nc" id="L69">				String runmode = xls.getCellData(&quot;Test Cases&quot;, &quot;Runmode&quot;, i);</span>
+				
+				//System.out.println(tcid + &quot; Runmode &quot; + runmode);
+				/*System.out.println(&quot;TIDA:&quot;+tcid);
+				System.out.println(&quot;TIDE:&quot;+testCaseName);
+				System.out.println(&quot;runmodeA:&quot;+runmode);
+				System.out.println(&quot;runmodeE:&quot;+&quot;Y&quot;);*/
+				
+<span class="nc bnc" id="L77" title="All 2 branches missed.">				if(tcid.equalsIgnoreCase(testCaseName)){</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">					if(runmode.equalsIgnoreCase(&quot;Y&quot;)){</span>
+<span class="nc" id="L79">						isExecutable = true;						</span>
+<span class="nc" id="L80">					}else{</span>
+<span class="nc" id="L81">						isExecutable = false;</span>
+						}
+					}
+				}
+				
+<span class="nc" id="L86">			xls =null;//release memory</span>
+<span class="nc" id="L87">			return isExecutable;		</span>
+		}
+
+	
+	
+//Return the test data from a two dimensional array
+		/**
+ * Gets the data.
+ *
+ * @param xls the xls
+ * @param testCaseName the test case name
+ * @return the data
+ */
+public static Object[][] getData(Xlsx_Reader xls, String testCaseName){
+			
+<span class="nc" id="L102">			System.out.println(&quot;Reader sheet name:&quot;+xls+&quot;, testcasename:&quot;+testCaseName);</span>
+			//if the test data sheet is not present for a test case
+<span class="nc bnc" id="L104" title="All 2 branches missed.">			if(! xls.isSheetExist(testCaseName)){</span>
+<span class="nc" id="L105">				xls = null;</span>
+<span class="nc" id="L106">				return new Object[1][0];</span>
+			}
+			
+<span class="nc" id="L109">			int rows = xls.getRowCount(testCaseName);</span>
+<span class="nc" id="L110">			int cols = xls.getColumnCount(testCaseName);</span>
+			
+			//Retrieving data from excel
+<span class="nc" id="L113">			Object[][] data = new Object[rows-1][cols-3];</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">			for(int rowNum =2; rowNum&lt;=rows; rowNum++ ){</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">				for(int colNum =0; colNum&lt;cols-3; colNum++){</span>
+					//System.out.print(xls.getCellData(testCaseName, colNum, rowNum)+ &quot; -- &quot;);
+<span class="nc" id="L117">					data[rowNum-2][colNum] = xls.getCellData(testCaseName, colNum, rowNum);</span>
+				}
+				//System.out.println();
+			}
+<span class="nc" id="L121">				return data;</span>
+		}
+		
+		
+// checks Runmode for dataSet
+				/**
+ * Gets the data set runmodes.
+ *
+ * @param xlsFile the xls file
+ * @param sheetName the sheet name
+ * @return the data set runmodes
+ */
+public static String[] getDataSetRunmodes(Xlsx_Reader xlsFile,String sheetName){
+<span class="nc" id="L134">					String[] runmodes=null;</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">					if(!xlsFile.isSheetExist(sheetName)){</span>
+<span class="nc" id="L136">						xlsFile=null;</span>
+<span class="nc" id="L137">						sheetName=null;</span>
+<span class="nc" id="L138">						runmodes = new String[1];</span>
+<span class="nc" id="L139">						runmodes[0]=&quot;Y&quot;;</span>
+<span class="nc" id="L140">						xlsFile=null;</span>
+<span class="nc" id="L141">						sheetName=null;</span>
+<span class="nc" id="L142">						return runmodes;</span>
+					}
+<span class="nc" id="L144">					runmodes = new String[xlsFile.getRowCount(sheetName)-1];</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">					for(int i=2;i&lt;=runmodes.length+1;i++){</span>
+<span class="nc" id="L146">						runmodes[i-2]=xlsFile.getCellData(sheetName, &quot;Runmode&quot;, i);</span>
+<span class="nc" id="L147">						System.out.println(&quot;Runmodes of sheet:&quot;+xlsFile.getCellData(sheetName, &quot;Runmode&quot;, i));</span>
+					}
+<span class="nc" id="L149">					xlsFile=null;</span>
+<span class="nc" id="L150">					sheetName=null;</span>
+<span class="nc" id="L151">					return runmodes;</span>
+					
+				}
+		
+//updating results for a particular data set
+		/**
+ * Report data set result.
+ *
+ * @param xls the xls
+ * @param testCaseName the test case name
+ * @param rowNum the row num
+ * @param result the result
+ */
+public static void reportDataSetResult(Xlsx_Reader xls, String testCaseName, int rowNum, String result){
+<span class="nc" id="L165">			xls.setCellData(testCaseName, &quot;Results&quot;, rowNum, result);</span>
+<span class="nc" id="L166">		}</span>
+		
+	//updating results for a particular data set
+		/**
+	 * Report data set result class link.
+	 *
+	 * @param xls the xls
+	 * @param testCaseName the test case name
+	 * @param rowNum the row num
+	 * @param result the result
+	 */
+	public static void reportDataSetResultClassLink(Xlsx_Reader xls, String testCaseName, int rowNum, String result){
+<span class="nc" id="L178">			xls.setCellData(testCaseName, &quot;ClassregLnk&quot;, rowNum, result);</span>
+<span class="nc" id="L179">		}</span>
+		//updating results for a particular data set
+		/**
+		 * Report data set result class id.
+		 *
+		 * @param xls the xls
+		 * @param testCaseName the test case name
+		 * @param rowNum the row num
+		 * @param result the result
+		 */
+		public static void reportDataSetResultClassId(Xlsx_Reader xls, String testCaseName, int rowNum, String result){
+<span class="nc" id="L190">			xls.setCellData(testCaseName, &quot;ClassId&quot;, rowNum, result);</span>
+<span class="nc" id="L191">		}</span>
+
+//return the Row Number for a Test
+		/**
+ * Gets the row num.
+ *
+ * @param xls the xls
+ * @param id the id
+ * @return the row num
+ */
+public static int getRowNum(Xlsx_Reader xls, String id){
+<span class="nc bnc" id="L202" title="All 2 branches missed.">			for(int i =2; i&lt;=xls.getRowCount(&quot;Test Cases&quot;); i++){</span>
+<span class="nc" id="L203">				String tcid = xls.getCellData(&quot;Test Cases&quot;, &quot;TCID&quot;, i);</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">				if(tcid.equals(id)){</span>
+<span class="nc" id="L205">					xls=null;</span>
+<span class="nc" id="L206">					return i;</span>
+				}
+			}
+<span class="nc" id="L209">			return -1;</span>
+		}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

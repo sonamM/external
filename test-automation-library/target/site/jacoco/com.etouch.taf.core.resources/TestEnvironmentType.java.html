@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TestEnvironmentType.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Automation Library</a> &gt; <a href="index.source.html" class="el_package">com.etouch.taf.core.resources</a> &gt; <span class="el_source">TestEnvironmentType.java</span></div><h1>TestEnvironmentType.java</h1><pre class="source lang-java linenums"><span class="nc" id="L1">/*</span>
+ * 
+ */
+package com.etouch.taf.core.resources;
+
+import org.apache.commons.logging.Log;
+
+import com.etouch.taf.util.LogUtil;
+
+// TODO: Auto-generated Javadoc
+/**
+ * TestEnvironmentType stores information on test execution environment.
+ * 
+ * @author eTouch Systems Corporation
+ * @version 1.0
+ * 
+ */
+public enum TestEnvironmentType {
+	
+<span class="nc" id="L20">	/** The local. */</span>
+<span class="nc" id="L21">	LOCAL(&quot;local&quot;),</span>
+	
+<span class="nc" id="L23">	/** The remote. */</span>
+<span class="nc" id="L24">	REMOTE(&quot;remote&quot;),</span>
+	
+<span class="nc" id="L26">	/** The browserstack. */</span>
+<span class="nc" id="L27">	BROWSERSTACK(&quot;browserstack&quot;);</span>
+ 
+	/** The log. */
+<span class="nc" id="L30">	static Log log = LogUtil.getLog(TestEnvironmentType.class);</span>
+	
+ 	/** The test env. */
+	 private String testEnv;
+
+	/**
+	 * Instantiates a new test environment type.
+	 *
+	 * @param testEnv the test env
+	 */
+<span class="nc" id="L40">	private TestEnvironmentType(String testEnv) {</span>
+<span class="nc" id="L41">		this.testEnv = testEnv;</span>
+<span class="nc" id="L42">	}</span>
+
+	/**
+	 * Returns test environment.
+	 *
+	 * @return the test env
+	 */
+	public String getTestEnv() {
+<span class="nc" id="L50">		return testEnv;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RallyConstants.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Test Automation Library</a> &gt; <a href="index.source.html" class="el_package">com.etouch.taf.tools.rally</a> &gt; <span class="el_source">RallyConstants.java</span></div><h1>RallyConstants.java</h1><pre class="source lang-java linenums">package com.etouch.taf.tools.rally;
+
+/**
+ * Interface for holding Rally integration constants.
+ * @author eTouch Systems Corporation
+ * @version 1.0
+ *
+ */
+<span class="nc" id="L9">public final class RallyConstants {</span>
+	
+<span class="nc" id="L11">	 public static String USER = &quot;User&quot;;</span>
+<span class="nc" id="L12">	 public static String USERNAME = &quot;UserName&quot;; </span>
+<span class="nc" id="L13">	 public static String FORMATTED_ID = &quot;FormattedID&quot;;</span>
+<span class="nc" id="L14">	 public static String NAME = &quot;Name&quot;;</span>
+<span class="nc" id="L15">	 public static String STATE = &quot;State&quot;;</span>
+<span class="nc" id="L16">	 public static String PRIORITY = &quot;Priority&quot;;</span>
+<span class="nc" id="L17">	 public static String FIXED = &quot;Fixed&quot;;</span>
+<span class="nc" id="L18">	 public static String LESSTHAN = &quot;&lt;&quot;;</span>
+<span class="nc" id="L19">	 public static String EQUALTO = &quot;=&quot;;</span>
+<span class="nc" id="L20">	 public static String AND_OPERATOR = &quot;AND&quot;;</span>
+<span class="nc" id="L21">	 public static String OR_OPERATOR = &quot;OR&quot;;</span>
+<span class="nc" id="L22">	 public static String ASC = &quot;asc&quot;;</span>
+<span class="nc" id="L23">	 public static String DESC = &quot;desc&quot;;</span>
+<span class="nc" id="L24">	 public static String DEFECT = &quot;defect&quot;;</span>
+<span class="nc" id="L25">	 public static String TESTCASE = &quot;testcase&quot;;</span>
+<span class="nc" id="L26">	 public static String SUBSCRIPTION = &quot;Subscription&quot;;</span>
+<span class="nc" id="L27">	 public static String SUBSCRIPTIONS =&quot;Subscriptions&quot;;</span>
+<span class="nc" id="L28">	 public static String SUBSCRIPTIONID = &quot;SubscriptionID&quot;;</span>
+<span class="nc" id="L29">	 public static String DISPLAYNAME = &quot;DisplayName&quot;;     </span>
+<span class="nc" id="L30">	 public static String _REF = &quot;_ref&quot;;</span>
+<span class="nc" id="L31">	 public static String CREATE =&quot;Create&quot;;</span>
+<span class="nc" id="L32">	 public static String UPDATE =&quot;Update&quot;;</span>
+<span class="nc" id="L33">	 public static String ATTACHMENT =&quot;Attachment&quot;;</span>
+<span class="nc" id="L34">	 public static String CONTENT = &quot;imageBase64String&quot;;</span>
+<span class="nc" id="L35">	 public static String CONTENTTYPE = &quot;image/png&quot;;</span>
+<span class="nc" id="L36">	 public static String DESCRIPTION = &quot;Attachment From REST&quot;;</span>
+<span class="nc" id="L37">	 public static String ATTACHMENTCONTENT = &quot;AttachmentContent&quot;;</span>
+<span class="nc" id="L38">	 public static String ARTIFACT = &quot;ref&quot;;</span>
+<span class="nc" id="L39">	 public static String SIZE = &quot;Size&quot;;</span>
+<span class="nc" id="L40">	 public static String METHOD = &quot;Method&quot;;</span>
+<span class="nc" id="L41">	 public static String TYPE = &quot;Type&quot;; </span>
+<span class="nc" id="L42">	 public static String WORKSPACE = &quot;Workspace&quot;;</span>
+<span class="nc" id="L43">	 public static String WORKSPACES = &quot;Workspaces&quot;;</span>
+<span class="nc" id="L44">	 public static String PROJECT = &quot;Project&quot;;</span>
+<span class="nc" id="L45">	 public static String PROJECTS = &quot;Projects&quot;;     </span>
+<span class="nc" id="L46">	 public static String OWNER = &quot;Owner&quot;;</span>
+<span class="nc" id="L47">	 public static int DEFAULT_PAGESIZE = 1;</span>
+<span class="nc" id="L48">	 public static int DEFAULT_LIMIT = 5;</span>
+<span class="nc" id="L49">	 public static String CREATEDATE = &quot;CreationDate&quot;;</span>
+<span class="nc" id="L50">	 public static String VERDICT = &quot;Fail&quot;;</span>
+<span class="nc" id="L51">	 public static String NOTES = &quot;Notes&quot;;</span>
+<span class="nc" id="L52">	 public static String TARGETBUILD = &quot;TargetBuild&quot;;</span>
+<span class="nc" id="L53">	 public static String SEVERITY = &quot;Severity&quot;;</span>
+<span class="nc" id="L54">	 public static String OBJECTID = &quot;ObjectID&quot;;</span>
+<span class="nc" id="L55">	 public static String TESTCASEFID = &quot;TestCase.FormattedID&quot;;</span>
+<span class="nc" id="L56">	 public static String RALLYURL= &quot;https://rally1.rallydev.com&quot;;</span>
+	 //sample project original
+<span class="nc" id="L58">	public static String RALLYUSERNAME= &quot;rpandey@etouch.net&quot;;</span>
+<span class="nc" id="L59">	public static String RALLYPASSWD= &quot;Rally123!&quot;;</span>
+	 
+	 //ihs project details
+	 //public static String RALLYUSERNAME= &quot;tejasa.sawant@ihs.com&quot;;
+	 //public static String RALLYPASSWD= &quot;eTouch123&quot;;
+<span class="nc" id="L64">	 public static String RALLYAPP= &quot;Sample Project&quot;;	 </span>
+<span class="nc" id="L65">	 public static String STATUS_FIXED = &quot;Fixed&quot;;</span>
+<span class="nc" id="L66">	 public static String STATUS_CLOSED = &quot;Closed&quot;;</span>
+<span class="nc" id="L67">	 public static String STATUS_OPEN = &quot;Open&quot;;</span>
+<span class="nc" id="L68">	 public static String CREATION_DATE_FORMAT = &quot;yyyy-MM-dd'T'HH:mm:ssZ&quot;;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.6.4.201312101107</span></div></body></html>
